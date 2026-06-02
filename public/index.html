@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlphaDash — Alpha Digital</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#0a0f1e;--bg2:#0d1226;--bg3:#111827;--bg4:#1a2235;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.12);
+  --teal:#14b8a6;--teal2:#2dd4bf;--teal3:rgba(20,184,166,0.15);
+  --pink:#e11d74;--pink2:rgba(225,29,116,0.15);
+  --text:#f1f5f9;--muted:#64748b;--muted2:#94a3b8;
+  --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);min-height:100vh;background:#0a0f1a;
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;transition:.3s;
+}
+.sidebar-logo{
+  height:64px;display:flex;align-items:center;gap:10px;
+  padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.logo-icon{
+  width:32px;height:32px;border-radius:8px;background:var(--teal3);
+  border:1px solid rgba(20,184,166,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-icon svg{width:16px;height:16px;color:var(--teal2);}
+.logo-name{font-weight:800;font-size:1rem;letter-spacing:-.3px;white-space:nowrap;}
+.logo-name span{color:var(--teal2);}
+.sidebar-nav{flex:1;padding:8px;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;
+  border-radius:8px;cursor:pointer;transition:.15s;color:var(--muted2);
+  position:relative;margin-bottom:2px;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.nav-item.active{color:var(--teal2);background:var(--teal3);}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:20px;background:var(--teal2);border-radius:0 2px 2px 0;
+}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;}
+.nav-item-text{display:flex;flex-direction:column;}
+.nav-item-label{font-size:.85rem;font-weight:600;line-height:1.2;}
+.nav-item-sub{font-size:.7rem;color:var(--muted);line-height:1.2;}
+.nav-divider{height:1px;background:var(--border);margin:8px 4px;}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border);}
+.meta-progress{background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;}
+.meta-progress-header{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:6px;}
+.meta-progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.meta-progress-fill{height:100%;background:var(--teal);border-radius:2px;transition:.5s;}
+.meta-progress-footer{display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* HEADER */
+.header{
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;border-bottom:1px solid var(--border);
+  background:rgba(10,15,30,0.9);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:50;gap:12px;
+}
+.header-left{display:flex;flex-direction:column;}
+.header-title{font-size:.9rem;font-weight:700;color:var(--text);}
+.header-sub{font-size:.7rem;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.status-dot{display:flex;align-items:center;gap:5px;font-size:.72rem;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.dot-off{background:var(--muted);}
+.dot-ok-text{color:var(--green);}
+.dot-off-text{color:var(--muted);}
+.header-divider{width:1px;height:16px;background:var(--border);}
+.btn-refresh{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  border:1px solid var(--border2);border-radius:8px;background:rgba(255,255,255,0.04);
+  color:var(--muted2);font-size:.72rem;font-weight:600;cursor:pointer;transition:.15s;
+  font-family:'Inter',sans-serif;
+}
+.btn-refresh:hover{border-color:var(--teal);color:var(--teal);}
+.btn-refresh svg{width:13px;height:13px;}
+.btn-refresh.spin svg{animation:spin .7s linear infinite;}
+.select-range{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:6px 28px 6px 12px;color:var(--text);font-size:.78rem;font-weight:600;
+  cursor:pointer;font-family:'Inter',sans-serif;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+
+/* CONTENT */
+.content{padding:24px;flex:1;}
+.page{display:none;}.page.active{display:block;}
+
+/* SECTION */
+.section-label{
+  font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-label-dot{width:6px;height:14px;background:var(--teal);border-radius:3px;flex-shrink:0;}
+
+/* GRIDS */
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:1300px){.g5{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr);}.g21{grid-template-columns:1fr;}}
+@media(max-width:768px){.g5,.g4,.g3,.g2{grid-template-columns:1fr 1fr;}.main{margin-left:0;}.sidebar{transform:translateX(-100%);}}
+
+/* KPI CARDS */
+.kpi{
+  background:var(--teal);border:1px solid rgba(255,255,255,0.15);
+  border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;
+  transition:.2s;cursor:default;
+}
+.kpi:hover{filter:brightness(1.08);transform:scale(1.01);}
+.kpi.pink{background:var(--pink);}
+.kpi.dark{background:var(--bg2);border-color:var(--border);}
+.kpi-glow{
+  position:absolute;top:-20px;right:-20px;width:80px;height:80px;
+  background:rgba(255,255,255,0.12);border-radius:50%;filter:blur(20px);
+}
+.kpi-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.kpi-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.75);}
+.kpi-badge{
+  font-size:.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+  background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);
+  color:#fff;padding:2px 6px;border-radius:4px;
+}
+.kpi-icon{color:rgba(255,255,255,0.5);}
+.kpi-icon svg{width:16px;height:16px;}
+.kpi-value{font-size:1.8rem;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:6px;}
+.kpi-sub{font-size:.72rem;color:rgba(255,255,255,0.65);line-height:1.3;}
+
+/* CHART CARD */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:20px;
+}
+.card-title{
+  font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted2);margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.card-title-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{
+  background:rgba(255,255,255,0.03);padding:10px 14px;text-align:left;
+  font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:10px 14px;font-size:.8rem;border-bottom:1px solid var(--border);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;}
+.badge-pago{background:rgba(16,185,129,0.15);color:#10b981;}
+.badge-pendente{background:rgba(245,158,11,0.15);color:#f59e0b;}
+.badge-pix{background:rgba(20,184,166,0.15);color:var(--teal2);}
+.badge-boleto{background:rgba(167,139,250,0.15);color:#a78bfa;}
+.badge-cartao{background:rgba(59,130,246,0.15);color:#60a5fa;}
+.val-pos{color:var(--teal2);font-family:'JetBrains Mono',monospace;font-weight:600;}
+.val-neg{color:var(--red);font-family:'JetBrains Mono',monospace;font-weight:600;}
+.val-cyan{color:var(--teal2);font-family:'JetBrains Mono',monospace;font-weight:600;}
+
+/* RANKING */
+.rank-item{
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{
+  width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0;
+  background:rgba(255,255,255,0.05);color:var(--muted);
+}
+.rank-num.gold{background:rgba(245,158,11,0.15);color:#f59e0b;}
+.rank-num.silver{background:rgba(148,163,184,0.15);color:#94a3b8;}
+.rank-num.bronze{background:rgba(180,83,9,0.15);color:#b45309;}
+.rank-name{flex:1;font-weight:600;font-size:.88rem;}
+.rank-bar-bg{flex:2;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.rank-bar{height:100%;background:var(--teal);border-radius:3px;transition:width 1s ease;}
+.rank-val{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;color:var(--teal2);min-width:90px;text-align:right;}
+
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+  z-index:200;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(6px);
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:16px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,0.5);
+}
+.modal-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:20px 24px;border-bottom:1px solid var(--border);
+}
+.modal-title{font-size:1rem;font-weight:700;}
+.modal-sub{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.modal-close{
+  background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;
+  border-radius:6px;transition:.15s;
+}
+.modal-close:hover{color:var(--text);background:rgba(255,255,255,0.06);}
+.modal-close svg{width:18px;height:18px;}
+.modal-body{padding:20px 24px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);display:block;margin-bottom:6px;}
+.form-input{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;color:var(--text);font-size:.85rem;
+  font-family:'Inter',sans-serif;transition:.15s;outline:none;
+}
+.form-input:focus{border-color:var(--teal);background:rgba(20,184,166,0.05);}
+.form-select{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 12px;color:var(--text);font-size:.85rem;
+  font-family:'Inter',sans-serif;outline:none;
+}
+.form-hint{font-size:.68rem;color:var(--muted);margin-top:4px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-primary{
+  width:100%;background:var(--teal);color:#fff;border:none;border-radius:10px;
+  padding:12px;font-size:.88rem;font-weight:700;cursor:pointer;transition:.15s;
+  font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary:hover{background:var(--teal2);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-secondary{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;
+  border:1px solid var(--border2);border-radius:8px;background:rgba(255,255,255,0.04);
+  color:var(--muted2);font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;
+  font-family:'Inter',sans-serif;
+}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal);}
+.btn-teal{
+  display:flex;align-items:center;gap:6px;padding:8px 16px;
+  background:var(--teal);color:#fff;border:none;border-radius:8px;
+  font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;
+}
+.btn-teal:hover{background:var(--teal2);}
+.flex-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  border-radius:20px;font-size:.7rem;font-weight:600;
+}
+.chip-ok{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.2);}
+.chip-off{background:rgba(100,116,139,0.12);color:var(--muted);border:1px solid rgba(100,116,139,0.2);}
+.chip-teal{background:var(--teal3);color:var(--teal2);border:1px solid rgba(20,184,166,0.2);}
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 24px;color:var(--muted);text-align:center;gap:12px;
+}
+.empty-state p{font-size:.85rem;}
+.funil-bar{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;margin:6px 0;}
+.funil-fill{height:100%;background:var(--teal);border-radius:5px;transition:width 1s ease;}
+.funil-row{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;margin-top:8px;}
+.funil-summary{
+  background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 14px;
+  text-align:center;font-size:.82rem;color:var(--muted2);margin-top:8px;
+}
+.funil-summary b{color:var(--teal2);}
+.cpa-box{background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:center;margin-top:10px;}
+.cpa-label{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px;}
+.cpa-value{font-size:1.6rem;font-weight:800;color:var(--teal2);font-family:'JetBrains Mono',monospace;}
+.vendor-card{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:12px;padding:16px;margin-bottom:12px;
+}
+.vendor-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.vendor-name{font-weight:800;font-size:1.1rem;}
+.vendor-src{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.vendor-total{text-align:right;}
+.vendor-total-val{font-size:1.3rem;font-weight:800;color:var(--teal2);font-family:'JetBrains Mono',monospace;}
+.vendor-total-label{font-size:.68rem;color:var(--muted);}
+.vendor-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.vendor-stat{background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;text-align:center;}
+.vendor-stat-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.95rem;margin-bottom:2px;}
+.vendor-stat-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+.progress-label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px;}
+.progress-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width 1s ease;}
+.item-row{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:6px;
+}
+.item-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.item-name{flex:1;font-size:.85rem;font-weight:500;}
+.item-sub{font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.btn-icon{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px;transition:.15s;}
+.btn-icon:hover{color:var(--red);}
+.btn-icon svg{width:15px;height:15px;}
+.add-row{display:flex;gap:8px;margin-bottom:12px;}
+.add-row .form-input{flex:1;}
+.escalao-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.escalao-card{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:10px;padding:12px;text-align:center;
+}
+.escalao-nivel{font-size:.7rem;font-weight:700;color:var(--teal2);margin-bottom:2px;}
+.escalao-min{font-size:.65rem;color:var(--muted);margin-bottom:4px;}
+.escalao-pct{font-size:1.2rem;font-weight:900;color:var(--amber);}
+.bonus-row{display:flex;flex-wrap:wrap;gap:8px;}
+.bonus-chip{
+  display:flex;align-items:center;gap:6px;padding:7px 12px;
+  background:rgba(255,255,255,0.04);border-radius:8px;font-size:.72rem;color:var(--muted2);
+}
+.despesa-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border);font-size:.82rem;
+}
+.despesa-row:last-child{border-bottom:none;}
+.despesa-total{
+  display:flex;justify-content:space-between;padding:12px 0 0;
+  margin-top:8px;border-top:1px solid var(--border2);font-weight:700;font-size:.88rem;
+}
+.loading-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;
+}
+.spinner{
+  width:36px;height:36px;border:2px solid rgba(255,255,255,0.1);
+  border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <span class="loading-text">Carregando dados...</span>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M22 7l-8.5 8.5-5-5L2 17"/>
+        <path d="M16 7h6v6"/>
+      </svg>
+    </div>
+    <span class="logo-name">Alpha<span>Dash</span></span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="goPage('global')" data-page="global">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Visão Global</span><span class="nav-item-sub">KPIs e Macro</span></div>
+    </div>
+    <div class="nav-item" onclick="goPage('comercial')" data-page="comercial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Comercial</span><span class="nav-item-sub">Closers</span></div>
+    </div>
+    <div class="nav-item" onclick="goPage('ranking')" data-page="ranking">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Ranking</span><span class="nav-item-sub">Top Vendedores</span></div>
+    </div>
+    <div class="nav-item" onclick="goPage('inteligencia')" data-page="inteligencia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Inteligência</span><span class="nav-item-sub">Tráfego</span></div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="goPage('folha')" data-page="folha">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Folha e Metas</span><span class="nav-item-sub">RH</span></div>
+    </div>
+    <div class="nav-item" onclick="goPage('dre')" data-page="dre">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/></svg>
+      <div class="nav-item-text"><span class="nav-item-label">Custos & DRE</span><span class="nav-item-sub">Operação</span></div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="meta-progress">
+      <div class="meta-progress-header">
+        <span style="color:var(--teal2);font-weight:700;font-size:.72rem;">META</span>
+        <span id="metaPct" style="color:var(--muted);font-size:.72rem;">0%</span>
+      </div>
+      <div class="meta-progress-bar"><div class="meta-progress-fill" id="metaFill" style="width:0%"></div></div>
+      <div class="meta-progress-footer">
+        <span id="metaCurrent">R$ 0</span>
+        <span>R$ 1000k</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title" id="headerTitle">Visão Global</div>
+      <div class="header-sub" id="headerSub">KPIs macro da operação</div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="statusMeta">
+        <div class="dot dot-off"></div><span class="dot-off-text">Meta Ads</span>
+      </div>
+      <div class="status-dot" id="statusWebhook">
+        <div class="dot dot-off"></div><span class="dot-off-text">Webhooks</span>
+      </div>
+      <div class="header-divider"></div>
+      <button class="btn-refresh" id="btnRefresh" onclick="loadData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        Atualizar
+      </button>
+      <select class="select-range" id="selectRange" onchange="loadData()">
+        <option value="1">Hoje</option>
+        <option value="7" selected>Últimos 7 dias</option>
+        <option value="15">Últimos 15 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="999">Este mês</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- VISÃO GLOBAL -->
+    <div class="page active" id="page-global">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <span style="font-size:.8rem;font-weight:600;color:var(--muted);">Visão Global</span>
+        <span class="chip chip-off" id="chipDados">○ Aguardando dados</span>
+      </div>
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="width:4px;height:14px;background:var(--teal);border-radius:2px;display:inline-block;"></span>
+        Faturamento & Performance
+      </div>
+      <div class="g4" id="kpiGlobal"></div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title"><div class="card-title-dot"></div>Evolução de Receita — Período Selecionado</div>
+        <canvas id="chartEvolucao" height="260"></canvas>
+      </div>
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="width:4px;height:14px;background:var(--teal2);border-radius:2px;display:inline-block;"></span>
+        Vendas por Método de Pagamento
+      </div>
+      <div class="g3" id="kpiPagamentos"></div>
+    </div>
+
+    <!-- COMERCIAL -->
+    <div class="page" id="page-comercial">
+      <div class="flex-between">
+        <div class="flex-row">
+          <label style="font-size:.8rem;color:var(--muted);">Vendedor</label>
+          <select class="form-select" id="vendedorFilter" onchange="renderComercial()" style="width:auto;padding:6px 10px;font-size:.8rem;">
+            <option value="all">Todos</option>
+          </select>
+        </div>
+        <button class="btn-teal" onclick="openModal('modalVendedor')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Gerenciar Equipe
+        </button>
+      </div>
+      <div class="g5" id="kpiComercial" style="margin-top:12px;"></div>
+      <div class="g2" id="kpiComercial2"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title"><div class="card-title-dot"></div>Funil do Vendedor</div>
+          <div id="funil"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-dot"></div>Últimas Transações <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:auto;" id="qtdTransacoes"></span></div>
+          <div class="table-wrap">
+            <table id="tabelaTransacoes">
+              <thead><tr><th>Data</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Status</th><th>Forma</th></tr></thead>
+              <tbody id="tbodyTransacoes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="page" id="page-ranking">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <span style="font-size:.78rem;color:var(--muted);" id="rankingAtualizado"></span>
+        <button class="btn-secondary" onclick="loadData()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          Atualizar
+        </button>
+      </div>
+      <div class="g3" id="kpiRanking" style="margin-bottom:20px;"></div>
+      <div class="card" id="rankingList"></div>
+    </div>
+
+    <!-- INTELIGENCIA -->
+    <div class="page" id="page-inteligencia">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <span class="chip chip-teal" id="chipCriativos"></span>
+        <div class="flex-row">
+          <button class="btn-secondary" onclick="loadData()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            Atualizar
+          </button>
+          <button class="btn-secondary" onclick="openModal('modalContas')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Gerenciar Contas
+          </button>
+        </div>
+      </div>
+      <div class="g5" id="kpiInteligencia" style="margin-bottom:16px;"></div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title"><div class="card-title-dot"></div>Contas Meta Ads Conectadas</div>
+        <div id="contasList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-dot"></div>Ranking de Criativos — Meta Ads</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Criativo / Campanha</th><th>Gasto ↓</th><th>Custo/Msg</th><th>Msgs</th><th>V. Meta</th><th>CTR%</th></tr></thead>
+            <tbody id="tbodyCriativos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOLHA E METAS -->
+    <div class="page" id="page-folha">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <span class="chip chip-off" id="chipVendedores">0 vendedores ativos</span>
+      </div>
+      <div class="g5" id="kpiFolha" style="margin-bottom:20px;"></div>
+      <div id="folhaVendedores"></div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title"><div class="card-title-dot"></div>Tabela de Escalões · Base Fixo: R$ 1.500</div>
+        <div class="escalao-grid">
+          <div class="escalao-card"><div class="escalao-nivel">Nível 5</div><div class="escalao-min">≥ R$ 130k</div><div class="escalao-pct">7.0%</div></div>
+          <div class="escalao-card"><div class="escalao-nivel">Nível 4</div><div class="escalao-min">≥ R$ 100k</div><div class="escalao-pct">6.0%</div></div>
+          <div class="escalao-card"><div class="escalao-nivel">Nível 3</div><div class="escalao-min">≥ R$ 70k</div><div class="escalao-pct">5.0%</div></div>
+          <div class="escalao-card"><div class="escalao-nivel">Nível 2</div><div class="escalao-min">≥ R$ 50k</div><div class="escalao-pct">4.0%</div></div>
+          <div class="escalao-card"><div class="escalao-nivel">Nível 1</div><div class="escalao-min">≥ R$ 35k</div><div class="escalao-pct">2.5%</div></div>
+        </div>
+        <div class="bonus-row">
+          <div class="bonus-chip">🔥 <b style="color:#f97316;">Bônus Máx</b> ≥ R$ 10k/dia +R$ 300 bônus</div>
+          <div class="bonus-chip">⚡ <b style="color:#eab308;">Bônus Alto</b> ≥ R$ 7k/dia +R$ 100 bônus</div>
+          <div class="bonus-chip">✅ <b style="color:var(--teal2);">Bônus</b> ≥ R$ 5k/dia +R$ 50 bônus</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRE -->
+    <div class="page" id="page-dre">
+      <div class="flex-between" style="margin-bottom:16px;">
+        <span class="chip chip-teal">● Dados ao vivo</span>
+        <button class="btn-teal" onclick="openModal('modalDespesa')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Adicionar Despesa
+        </button>
+      </div>
+      <div class="g3" id="kpiDre" style="margin-bottom:16px;"></div>
+      <div class="g3" id="kpiDre2" style="margin-bottom:16px;"></div>
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;"><div class="card-title-dot"></div>Despesas do Período</div>
+          <span style="font-size:.72rem;color:var(--muted);" id="dreResumo"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th>Valor</th></tr></thead>
+            <tbody id="tbodyDespesas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODAL VENDEDOR -->
+<div class="modal-overlay" id="modalVendedor">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Gerenciar Equipe Comercial</div><div class="modal-sub">Alterações salvas diretamente no banco de dados.</div></div>
+      <button class="modal-close" onclick="closeModal('modalVendedor')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="vendedoresList" style="margin-bottom:16px;"></div>
+      <div style="font-size:.72rem;font-weight:700;color:var(--teal2);margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Adicionar Novo Vendedor
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="vNome" placeholder="Ex: Rafael Mendes"></div>
+        <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-input" id="vWhatsapp" placeholder="5511999990000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Link / SRC *</label><input class="form-input" id="vSrc" placeholder="src_nome"><div class="form-hint">O sistema usa este valor para cruzar o src_vendedor recebido pelo Webhook.</div></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Salário Fixo (R$)</label><input class="form-input" id="vSalario" type="number" value="1500"></div>
+        <div class="form-group"><label class="form-label">Meta Mensal (R$)</label><input class="form-input" id="vMeta" type="number" value="50000"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">% Comissão</label><input class="form-input" id="vComissao" type="number" value="5"><div class="form-hint">% de comissão sobre cada venda</div></div>
+        <div class="form-group"><label class="form-label">Auxílio Transporte (R$)</label><input class="form-input" id="vTransporte" type="number" value="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Chave Pix</label><input class="form-input" id="vPix" placeholder="CPF, e-mail ou chave aleatória"></div>
+      <button class="btn-primary" id="btnSalvarVendedor" onclick="salvarVendedor()">+ Adicionar Vendedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA -->
+<div class="modal-overlay" id="modalDespesa">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Nova Despesa Operacional</div><div class="modal-sub">Lançar custo no Demonstrativo de Resultados</div></div>
+      <button class="modal-close" onclick="closeModal('modalDespesa')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Descrição *</label><input class="form-input" id="dDesc" placeholder="Ex: Aluguel, Energia, Servidores..."></div>
+      <div class="form-group"><label class="form-label">Categoria *</label>
+        <select class="form-select" id="dCategoria">
+          <option>Custo Fixo</option><option>Custo Variável</option><option>Investimento</option><option>Imposto</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-input" id="dValor" type="number" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Data Competência</label><input class="form-input" id="dDataComp" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Data de Pagamento *</label><input class="form-input" id="dDataPag" type="date"><div class="form-hint">(Regime de Caixa — só abate no DRE neste dia)</div></div>
+      <button class="btn-primary" id="btnSalvarDespesa" onclick="salvarDespesa()">Lançar Despesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTAS META -->
+<div class="modal-overlay" id="modalContas">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Contas Meta Ads</div><div class="modal-sub">Gerencie suas contas de anúncios conectadas</div></div>
+      <button class="modal-close" onclick="closeModal('modalContas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="contasModalList" style="margin-bottom:16px;"></div>
+      <div class="add-row">
+        <input class="form-input" id="cNome" placeholder="Nome da conta">
+        <input class="form-input" id="cId" placeholder="act_XXXXXXXXXXX" style="font-family:'JetBrains Mono',monospace;font-size:.8rem;">
+        <button class="btn-teal" onclick="salvarConta()">+ Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────
+const API = '/.netlify/functions'
+
+// ─── STATE ──────────────────────────────────────────────────
+var state = {
+  transacoes: [], vendedores: [], metaAds: [], metaAccounts: [],
+  criativos: [], despesas: [], loading: false
+}
+var charts = {}
+
+// ─── HELPERS ────────────────────────────────────────────────
+function R(v) {
+  return new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL', maximumFractionDigits:0}).format(v||0)
+}
+function Rd(v) {
+  return new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'}).format(v||0)
+}
+function fmtDate(d) {
+  if (!d) return '-'
+  try { return d.split('-').reverse().join('/') } catch(e) { return d }
+}
+function killChart(id) {
+  if (charts[id]) { try { charts[id].destroy() } catch(e) {} delete charts[id] }
+}
+function el(id) { return document.getElementById(id) }
+function badge(text, cls) { return '<span class="badge ' + cls + '">' + text + '</span>' }
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+var pageTitles = {
+  global: ['Visão Global', 'KPIs macro da operação'],
+  comercial: ['Comercial — Closers', 'Performance individual por vendedor'],
+  ranking: ['Ranking de Vendedores', 'Classificação por faturamento'],
+  inteligencia: ['Inteligência de Tráfego', 'Ranking e análise de criativos'],
+  folha: ['Folha e Metas — RH', 'Comissões por escalão · Bônus diário'],
+  dre: ['Custos & DRE', 'Demonstrativo de Resultados']
+}
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active') })
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active') })
+  el('page-' + id).classList.add('active')
+  document.querySelector('[data-page="' + id + '"]').classList.add('active')
+  el('headerTitle').textContent = pageTitles[id][0]
+  el('headerSub').textContent = pageTitles[id][1]
+  renderPage(id)
+}
+
+// ─── MODAL ──────────────────────────────────────────────────
+function openModal(id) {
+  el(id).classList.add('open')
+  if (id === 'modalVendedor') renderVendedoresList()
+  if (id === 'modalContas') renderContasModal()
+  var hoje = new Date().toISOString().split('T')[0]
+  if (el('dDataComp')) el('dDataComp').value = hoje
+  if (el('dDataPag')) el('dDataPag').value = hoje
+}
+function closeModal(id) { el(id).classList.remove('open') }
+
+// ─── LOAD DATA ───────────────────────────────────────────────
+function loadData() {
+  var days = el('selectRange').value
+  var btn = el('btnRefresh')
+  btn.classList.add('spin')
+  btn.disabled = true
+
+  fetch(API + '/data?days=' + days)
+    .then(function(r) { return r.json() })
+    .then(function(d) {
+      if (d.error) throw new Error(d.error)
+      state.transacoes = d.transacoes || []
+      state.vendedores = d.vendedores || []
+      state.metaAds = d.metaAds || []
+      state.metaAccounts = d.metaAccounts || []
+      state.criativos = d.criativos || []
+      state.despesas = d.despesas || []
+      updateStatus()
+      updateSelectFilter()
+      var active = document.querySelector('.page.active')
+      if (active) renderPage(active.id.replace('page-', ''))
+      el('loadingOverlay').style.display = 'none'
+    })
+    .catch(function(e) {
+      console.error(e)
+      el('loadingOverlay').style.display = 'none'
+    })
+    .finally(function() {
+      btn.classList.remove('spin')
+      btn.disabled = false
+    })
+}
+
+function updateStatus() {
+  var metaOk = state.metaAccounts.length > 0
+  var webhookOk = state.transacoes.length > 0
+  el('statusMeta').innerHTML = '<div class="dot ' + (metaOk?'dot-ok':'dot-off') + '"></div><span class="' + (metaOk?'dot-ok-text':'dot-off-text') + '">Meta Ads</span>'
+  el('statusWebhook').innerHTML = '<div class="dot ' + (webhookOk?'dot-ok':'dot-off') + '"></div><span class="' + (webhookOk?'dot-ok-text':'dot-off-text') + '">Webhooks</span>'
+}
+
+function updateSelectFilter() {
+  var sel = el('vendedorFilter')
+  var cur = sel.value
+  sel.innerHTML = '<option value="all">Todos</option>'
+  state.vendedores.forEach(function(v) {
+    sel.innerHTML += '<option value="' + v.src + '">' + v.nome + '</option>'
+  })
+  if (cur) sel.value = cur
+}
+
+// ─── COMPUTED ────────────────────────────────────────────────
+function getMetrics(filter) {
+  var transacoes = filter === 'all' ? state.transacoes : state.transacoes.filter(function(t) { return t.src_vendedor === filter })
+  var pagas = transacoes.filter(function(t) { return t.status === 'Pago' })
+  var faturamento = pagas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+  var totalVendas = pagas.length
+  var gastoMeta = state.metaAds.reduce(function(s,m) { return s + (m.spend||0) }, 0)
+  var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
+  var roas = gastoMeta > 0 ? faturamento / gastoMeta : 0
+  var lucroLiq = faturamento - gastoMeta
+  var cpa = totalVendas > 0 ? gastoMeta / totalVendas : 0
+  var ticket = totalVendas > 0 ? faturamento / totalVendas : 0
+  var conv = mensagens > 0 ? (totalVendas / mensagens * 100) : 0
+  var porPag = {}
+  pagas.forEach(function(t) {
+    var k = t.forma_pagamento || 'Outro'
+    porPag[k] = (porPag[k]||0) + t.valor
+  })
+  return { transacoes: transacoes, pagas: pagas, faturamento: faturamento, totalVendas: totalVendas, gastoMeta: gastoMeta, mensagens: mensagens, roas: roas, lucroLiq: lucroLiq, cpa: cpa, ticket: ticket, conv: conv, porPag: porPag }
+}
+
+function kpiCard(label, value, sub, pink, badge_text) {
+  var cls = pink ? 'kpi pink' : 'kpi'
+  var badgeHtml = badge_text ? '<div class="kpi-badge">' + badge_text + '</div>' : ''
+  return '<div class="' + cls + '"><div class="kpi-glow"></div><div class="kpi-header"><div style="display:flex;align-items:center;gap:6px;">' + badgeHtml + '<div class="kpi-label">' + label + '</div></div></div><div class="kpi-value">' + value + '</div><div class="kpi-sub">' + sub + '</div></div>'
+}
+
+// ─── RENDER PAGE ─────────────────────────────────────────────
+function renderPage(id) {
+  if (id === 'global') renderGlobal()
+  else if (id === 'comercial') renderComercial()
+  else if (id === 'ranking') renderRanking()
+  else if (id === 'inteligencia') renderInteligencia()
+  else if (id === 'folha') renderFolha()
+  else if (id === 'dre') renderDre()
+}
+
+// ─── GLOBAL ──────────────────────────────────────────────────
+function renderGlobal() {
+  var m = getMetrics('all')
+  el('chipDados').className = 'chip ' + (m.totalVendas > 0 ? 'chip-ok' : 'chip-off')
+  el('chipDados').textContent = m.totalVendas > 0 ? '● Dados ao vivo' : '○ Aguardando dados'
+
+  el('kpiGlobal').innerHTML =
+    kpiCard('Faturamento', R(m.faturamento), m.totalVendas + ' vendas aprovadas', false, 'VENDAS') +
+    kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
+    kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto $' + m.gastoMeta.toFixed(2) : 'Aguardando Meta Ads API', false) +
+    kpiCard('Qtd de Vendas', m.totalVendas, 'Transações aprovadas', false)
+
+  // Progresso meta sidebar
+  var metaPct = Math.min(m.faturamento / 1000000 * 100, 100)
+  el('metaPct').textContent = metaPct.toFixed(0) + '%'
+  el('metaFill').style.width = metaPct + '%'
+  el('metaCurrent').textContent = R(m.faturamento)
+
+  // Chart evolução
+  killChart('evolucao')
+  var days = parseInt(el('selectRange').value)
+  var labels = [], vendaData = [], pendData = [], adsData = []
+  var now = new Date()
+  for (var i = days - 1; i >= 0; i--) {
+    var d = new Date(now.getTime() - i * 86400000)
+    var k = d.toISOString().split('T')[0]
+    var label = (d.getDate()) + '/' + (d.getMonth()+1)
+    labels.push(label)
+    var vSum = 0, pSum = 0, aSum = 0
+    state.transacoes.forEach(function(t) { if (t.data === k) { if (t.status === 'Pago') vSum += t.valor||0; else pSum += t.valor||0 } })
+    state.metaAds.forEach(function(ma) { if (ma.data === k) aSum += ma.spend||0 })
+    vendaData.push(vSum); pendData.push(pSum); adsData.push(aSum)
+  }
+  var ctx = el('chartEvolucao').getContext('2d')
+  charts.evolucao = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Vendas', data: vendaData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.08)', tension: .4, fill: true, pointRadius: 3, pointBackgroundColor: '#14b8a6' },
+        { label: 'Pendentes', data: pendData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: .4, fill: true, pointRadius: 3, borderDash: [5,5] },
+        { label: 'Gasto FB Ads', data: adsData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: .4, fill: true, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#475569', font: { size: 10 }, callback: function(v) { return 'R$'+(v/1000).toFixed(0)+'k' } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  })
+
+  // Pagamentos
+  var tipos = ['PIX', 'BOLETO', 'CARTAO']
+  var html = ''
+  tipos.forEach(function(tipo) {
+    var val = m.porPag[tipo] || 0
+    var qtd = m.pagas.filter(function(t) { return t.forma_pagamento === tipo }).length
+    html += kpiCard(tipo, R(val), qtd + ' venda' + (qtd !== 1 ? 's' : '') + ' pagas', false)
+  })
+  el('kpiPagamentos').innerHTML = html
+}
+
+// ─── COMERCIAL ───────────────────────────────────────────────
+function renderComercial() {
+  var filter = el('vendedorFilter') ? el('vendedorFilter').value : 'all'
+  var m = getMetrics(filter)
+
+  el('kpiComercial').innerHTML =
+    kpiCard('Leads Recebidos', m.mensagens || '?', 'Msgs Meta — todas as campanhas', false) +
+    kpiCard('Vendas', m.totalVendas, m.totalVendas + ' transações aprovadas', false, 'VENDA') +
+    kpiCard('Faturamento', R(m.faturamento), 'Ticket médio ' + R(m.ticket), false) +
+    kpiCard('Taxa de Conversão', m.conv.toFixed(1) + '%', m.totalVendas + ' vendas / ' + m.mensagens + ' leads', false) +
+    kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
+    kpiCard('CPA (Vendedor)', R(m.cpa), 'Gasto Meta / Vendas', true)
+
+  el('kpiComercial2').innerHTML =
+    kpiCard('Gasto em Tráfego (Total)', '$' + m.gastoMeta.toFixed(2), 'Todas as campanhas · USD', true) +
+    kpiCard('Msgs Meta', m.mensagens, 'Mensagens iniciadas · todas as campanhas', false)
+
+  // Funil
+  var convPct = m.mensagens > 0 ? Math.min(m.totalVendas / m.mensagens * 100, 100) : 0
+  el('funil').innerHTML =
+    '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;"><span style="color:var(--muted2);">Leads Recebidos</span><span style="font-family:JetBrains Mono,monospace;">' + m.mensagens.toLocaleString('pt-BR') + '</span></div>' +
+    '<div class="funil-bar"><div class="funil-fill" style="width:100%"></div></div>' +
+    '<div style="font-size:.7rem;color:var(--muted);">↓ conversão: ' + convPct.toFixed(1) + '%</div></div>' +
+    '<div><div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;"><span style="color:var(--muted2);">Vendas Aprovadas</span><span style="font-family:JetBrains Mono,monospace;">' + m.totalVendas + '</span></div>' +
+    '<div class="funil-bar"><div class="funil-fill" style="width:' + convPct.toFixed(1) + '%"></div></div></div>' +
+    '<div class="funil-summary">' + m.mensagens.toLocaleString('pt-BR') + ' Leads → <b>' + m.totalVendas + ' Vendas</b> → <b>' + convPct.toFixed(1) + '%</b></div>' +
+    '<div class="cpa-box"><div class="cpa-label">CPA</div><div class="cpa-value">' + R(m.cpa) + '</div><div style="font-size:.7rem;color:var(--muted);margin-top:2px;">por aquisição</div></div>'
+
+  // Tabela transações
+  el('qtdTransacoes').textContent = m.transacoes.length + ' registros'
+  var tbody = ''
+  m.transacoes.slice(0, 25).forEach(function(t) {
+    var pagCls = t.forma_pagamento === 'PIX' ? 'badge-pix' : t.forma_pagamento === 'BOLETO' ? 'badge-boleto' : 'badge-cartao'
+    tbody += '<tr>' +
+      '<td style="color:var(--muted2)">' + fmtDate(t.data) + '</td>' +
+      '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">' + (t.cliente||'-') + '</td>' +
+      '<td style="font-size:.72rem;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis">' + (t.produto||'-') + '</td>' +
+      '<td class="val-cyan">' + Rd(t.valor) + '</td>' +
+      '<td>' + badge(t.status||'-', t.status==='Pago'?'badge-pago':'badge-pendente') + '</td>' +
+      '<td>' + badge(t.forma_pagamento||'-', pagCls) + '</td>' +
+      '</tr>'
+  })
+  if (!tbody) tbody = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Nenhuma transação no período selecionado.</td></tr>'
+  el('tbodyTransacoes').innerHTML = tbody
+}
+
+// ─── RANKING ─────────────────────────────────────────────────
+function renderRanking() {
+  var m = getMetrics('all')
+  el('rankingAtualizado').textContent = 'Classificação por faturamento no período selecionado · atualizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+
+  el('kpiRanking').innerHTML =
+    kpiCard('Faturamento Total', R(m.faturamento), R(m.faturamento), false) +
+    kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Aguardando Meta Ads', true)
+
+  if (state.vendedores.length === 0) {
+    el('rankingList').innerHTML = '<div class="card"><div class="empty-state"><p>Nenhum vendedor cadastrado. Acesse Comercial → Gerenciar Equipe.</p></div></div>'
+    return
+  }
+
+  var sorted = state.vendedores.map(function(v) {
+    var vPagas = m.pagas.filter(function(t) { return t.src_vendedor === v.src })
+    var fat = vPagas.reduce(function(s,t) { return s + t.valor }, 0)
+    return { v: v, fat: fat, qtd: vPagas.length }
+  }).sort(function(a,b) { return b.fat - a.fat })
+
+  var maxFat = sorted[0] ? sorted[0].fat : 1
+  var numCls = ['gold', 'silver', 'bronze']
+  var html = '<div class="card">'
+  sorted.forEach(function(item, i) {
+    var pct = maxFat > 0 ? (item.fat / maxFat * 100).toFixed(1) : 0
+    html += '<div class="rank-item">' +
+      '<div class="rank-num ' + (numCls[i]||'') + '">' + (i+1) + '</div>' +
+      '<div class="rank-name">' + item.v.nome + '</div>' +
+      '<div class="rank-bar-bg"><div class="rank-bar" style="width:' + pct + '%"></div></div>' +
+      '<div class="rank-val">' + R(item.fat) + '</div>' +
+      '</div>'
+  })
+  html += '</div>'
+  el('rankingList').innerHTML = html
+}
+
+// ─── INTELIGENCIA ─────────────────────────────────────────────
+function renderInteligencia() {
+  var gastoMeta = state.metaAds.reduce(function(s,m) { return s + (m.spend||0) }, 0)
+  var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
+  var compras = state.metaAds.reduce(function(s,m) { return s + (m.purchases||0) }, 0)
+  var cpm = state.metaAds.length > 0 ? state.metaAds.reduce(function(s,m) { return s + (m.cpm||0) }, 0) / state.metaAds.length : 0
+  var cpm_msg = mensagens > 0 ? gastoMeta / mensagens : 0
+
+  el('chipCriativos').textContent = state.criativos.length > 0 ? '● ' + state.criativos.length + ' criativos ativos' : '○ Nenhum criativo'
+
+  el('kpiInteligencia').innerHTML =
+    kpiCard('Criativos Ativos', state.criativos.length, state.metaAccounts.length + ' contas ativas', false) +
+    kpiCard('Gasto FB Ads', '$' + gastoMeta.toFixed(2), 'Todas as contas ativas · USD', true) +
+    kpiCard('Custo/Mensagem', mensagens > 0 ? '$' + cpm_msg.toFixed(2) : '—', 'USD · média ponderada', false) +
+    kpiCard('Vendas Meta (Pixel)', compras, 'Todas as contas ativas', false) +
+    kpiCard('CPM Médio', '$' + cpm.toFixed(2), 'Custo por mil impressões', false)
+
+  // Contas
+  var contasHtml = ''
+  if (state.metaAccounts.length === 0) {
+    contasHtml = '<div class="empty-state" style="padding:24px;"><p>Nenhuma conta cadastrada. Clique em "Gerenciar Contas" para adicionar.</p></div>'
+  } else {
+    state.metaAccounts.forEach(function(a) {
+      contasHtml += '<div class="item-row"><div class="item-dot"></div><div class="item-name">' + a.nome + '</div><div class="item-sub">' + a.account_id + '</div></div>'
+    })
+  }
+  el('contasList').innerHTML = contasHtml
+
+  // Criativos tabela
+  var tbody = ''
+  state.criativos.slice(0, 20).forEach(function(c) {
+    tbody += '<tr>' +
+      '<td><div style="font-weight:600">' + (c.ad_name||'-') + '</div><div style="font-size:.68rem;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">' + (c.campaign_name||'') + '</div></td>' +
+      '<td style="font-family:JetBrains Mono,monospace">' + (c.spend ? '$'+c.spend.toFixed(2) : '-') + '</td>' +
+      '<td class="val-cyan">' + (c.cost_per_message > 0 ? '$'+c.cost_per_message.toFixed(2) : '—') + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace">' + (c.messages||0).toLocaleString('pt-BR') + '</td>' +
+      '<td style="color:#a78bfa;font-family:JetBrains Mono,monospace">' + (c.purchases > 0 ? c.purchases : '—') + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace">' + (c.ctr > 0 ? c.ctr.toFixed(2)+'%' : '—') + '</td>' +
+      '</tr>'
+  })
+  if (!tbody) tbody = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Nenhum dado de criativo. Sincronize o Meta Ads.</td></tr>'
+  el('tbodyCriativos').innerHTML = tbody
+}
+
+// ─── FOLHA ───────────────────────────────────────────────────
+function renderFolha() {
+  var m = getMetrics('all')
+  var custoEquipe = state.vendedores.reduce(function(s,v) { return s + (v.salario_fixo||0) + (v.auxilio_transporte||0) }, 0)
+  var totalCom = state.vendedores.reduce(function(s,v) {
+    var vFat = m.pagas.filter(function(t) { return t.src_vendedor === v.src }).reduce(function(ss,t) { return ss + t.valor }, 0)
+    return s + vFat * (v.comissao_pct||0) / 100
+  }, 0)
+
+  el('chipVendedores').textContent = state.vendedores.length + ' vendedor' + (state.vendedores.length !== 1 ? 'es' : '') + ' ativo' + (state.vendedores.length !== 1 ? 's' : '')
+
+  el('kpiFolha').innerHTML =
+    kpiCard('Faturamento Total', R(m.faturamento), 'Receita bruta do período', false) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
+    kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
+    kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
+    kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
+
+  if (state.vendedores.length === 0) {
+    el('folhaVendedores').innerHTML = '<div class="empty-state"><p>Nenhum vendedor ativo — cadastre vendedores na aba Comercial.</p></div>'
+    return
+  }
+
+  var html = ''
+  state.vendedores.forEach(function(v) {
+    var vVendas = m.pagas.filter(function(t) { return t.src_vendedor === v.src })
+    var vFat = vVendas.reduce(function(s,t) { return s + t.valor }, 0)
+    var com = vFat * (v.comissao_pct||0) / 100
+    var total = (v.salario_fixo||0) + com + (v.auxilio_transporte||0)
+    var metaPct = v.meta_mensal > 0 ? Math.min(vFat / v.meta_mensal * 100, 100) : 0
+    html += '<div class="vendor-card">' +
+      '<div class="vendor-card-header">' +
+        '<div><div class="vendor-name">' + v.nome + '</div><div class="vendor-src">SRC: ' + v.src + '</div></div>' +
+        '<div class="vendor-total"><div class="vendor-total-val">' + R(total) + '</div><div class="vendor-total-label">folha total</div></div>' +
+      '</div>' +
+      '<div class="vendor-stats">' +
+        '<div class="vendor-stat"><div class="vendor-stat-val">' + R(v.salario_fixo||0) + '</div><div class="vendor-stat-label">Salário Fixo</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val" style="color:var(--teal2)">' + R(com) + '</div><div class="vendor-stat-label">Comissão ' + (v.comissao_pct||0) + '%</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val">' + R(v.auxilio_transporte||0) + '</div><div class="vendor-stat-label">Transporte</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val">' + vVendas.length + '</div><div class="vendor-stat-label">Vendas</div></div>' +
+      '</div>' +
+      '<div class="progress-label"><span>Meta: ' + R(v.meta_mensal||0) + '</span><span>' + metaPct.toFixed(0) + '%</span></div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + metaPct.toFixed(1) + '%"></div></div>' +
+      '</div>'
+  })
+  el('folhaVendedores').innerHTML = html
+}
+
+// ─── DRE ─────────────────────────────────────────────────────
+function renderDre() {
+  var m = getMetrics('all')
+  var totalDespesas = state.despesas.reduce(function(s,d) { return s + (d.valor||0) }, 0)
+  var lucroFinal = m.faturamento - m.gastoMeta - totalDespesas
+  var custoEquipe = state.vendedores.reduce(function(s,v) { return s + (v.salario_fixo||0) }, 0)
+
+  el('kpiDre').innerHTML =
+    kpiCard('Lucro Operacional', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Receita − Tráfego', m.lucroLiq < 0) +
+    kpiCard('Total Custos Lançados', R(totalDespesas), totalDespesas === 0 ? '0 despesas no período' : state.despesas.length + ' despesas', false) +
+    kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Folha − Despesas', lucroFinal < 0)
+
+  el('kpiDre2').innerHTML =
+    kpiCard('Faturamento', R(m.faturamento), 'Receita bruta', false) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
+    kpiCard('Folha', R(custoEquipe), 'Salários base', false)
+
+  el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
+
+  var tbody = ''
+  state.despesas.forEach(function(d) {
+    tbody += '<tr>' +
+      '<td>' + (d.descricao||'-') + '</td>' +
+      '<td><span class="badge" style="background:rgba(255,255,255,0.06);color:var(--muted2)">' + (d.categoria||'-') + '</span></td>' +
+      '<td style="color:var(--muted);font-size:.75rem">' + fmtDate(d.data_pagamento) + '</td>' +
+      '<td class="val-neg">-' + Rd(d.valor) + '</td>' +
+      '</tr>'
+  })
+  if (!tbody) tbody = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">Nenhuma despesa lançada neste período.</td></tr>'
+  el('tbodyDespesas').innerHTML = tbody
+}
+
+// ─── RENDER MODAL VENDEDORES ──────────────────────────────────
+function renderVendedoresList() {
+  var html = ''
+  if (state.vendedores.length === 0) {
+    html = '<p style="text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:12px;">Nenhum vendedor cadastrado. Adicione abaixo.</p>'
+  }
+  state.vendedores.forEach(function(v) {
+    html += '<div class="item-row">' +
+      '<div class="item-dot"></div>' +
+      '<div class="item-name">' + v.nome + '</div>' +
+      '<div class="item-sub">' + v.src + '</div>' +
+      '<button class="btn-icon" onclick="deletarVendedor(\'' + v.id + '\')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+      '</button>' +
+      '</div>'
+  })
+  el('vendedoresList').innerHTML = html
+}
+
+function renderContasModal() {
+  var html = ''
+  state.metaAccounts.forEach(function(a) {
+    html += '<div class="item-row">' +
+      '<div class="item-dot"></div>' +
+      '<div class="item-name">' + a.nome + '</div>' +
+      '<div class="item-sub">' + a.account_id + '</div>' +
+      '<button class="btn-icon" onclick="deletarConta(\'' + a.id + '\')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+      '</button>' +
+      '</div>'
+  })
+  el('contasModalList').innerHTML = html
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────
+function salvarVendedor() {
+  var nome = el('vNome').value.trim()
+  var src = el('vSrc').value.trim()
+  if (!nome || !src) { alert('Nome e SRC são obrigatórios!'); return }
+  var btn = el('btnSalvarVendedor')
+  btn.disabled = true; btn.textContent = 'Salvando...'
+  fetch(API + '/actions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'add', nome: nome, whatsapp: el('vWhatsapp').value,
+      src: src, salario_fixo: el('vSalario').value, meta_mensal: el('vMeta').value,
+      comissao_pct: el('vComissao').value, auxilio_transporte: el('vTransporte').value,
+      chave_pix: el('vPix').value
+    })
+  })
+  .then(function(r) { return r.json() })
+  .then(function(d) {
+    if (d.error) throw new Error(d.error)
+    el('vNome').value = ''; el('vSrc').value = ''; el('vWhatsapp').value = ''; el('vPix').value = ''
+    loadData()
+    renderVendedoresList()
+  })
+  .catch(function(e) { alert('Erro: ' + e.message) })
+  .finally(function() { btn.disabled = false; btn.textContent = '+ Adicionar Vendedor' })
+}
+
+function deletarVendedor(id) {
+  if (!confirm('Remover este vendedor?')) return
+  fetch(API + '/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: id }) })
+  .then(function() { loadData(); renderVendedoresList() })
+}
+
+function salvarDespesa() {
+  var desc = el('dDesc').value.trim()
+  var valor = el('dValor').value
+  if (!desc || !valor) { alert('Descrição e valor são obrigatórios!'); return }
+  var btn = el('btnSalvarDespesa')
+  btn.disabled = true; btn.textContent = 'Lançando...'
+  fetch(API + '/actions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'add_despesa', descricao: desc, categoria: el('dCategoria').value,
+      valor: valor, data_competencia: el('dDataComp').value, data_pagamento: el('dDataPag').value
+    })
+  })
+  .then(function(r) { return r.json() })
+  .then(function(d) {
+    if (d.error) throw new Error(d.error)
+    closeModal('modalDespesa')
+    el('dDesc').value = ''; el('dValor').value = ''
+    loadData()
+  })
+  .catch(function(e) { alert('Erro: ' + e.message) })
+  .finally(function() { btn.disabled = false; btn.textContent = 'Lançar Despesa' })
+}
+
+function salvarConta() {
+  var nome = el('cNome').value.trim()
+  var id = el('cId').value.trim()
+  if (!nome || !id) { alert('Nome e ID são obrigatórios!'); return }
+  fetch(API + '/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add_conta', nome: nome, account_id: id }) })
+  .then(function() { el('cNome').value = ''; el('cId').value = ''; loadData(); renderContasModal() })
+}
+
+function deletarConta(id) {
+  if (!confirm('Remover esta conta?')) return
+  fetch(API + '/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_conta', id: id }) })
+  .then(function() { loadData(); renderContasModal() })
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+loadData()
+</script>
+</body>
+</html>
