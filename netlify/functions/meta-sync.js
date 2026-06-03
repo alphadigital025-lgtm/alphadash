@@ -1,0 +1,178 @@
+const META_TOKEN = process.env.META_ACCESS_TOKEN
+const SUPABASE_URL = process.env.SUPABASE_URL
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY
+const API_VERSION = 'v19.0'
+
+async function metaGet(path, params) {
+  var qs = Object.assign({ access_token: META_TOKEN, limit: 500 }, params || {})
+  var url = 'https://graph.facebook.com/' + API_VERSION + path + '?' +
+    Object.keys(qs).map(function(k) { return k + '=' + encodeURIComponent(qs[k]) }).join('&')
+  var res = await fetch(url)
+  var json = await res.json()
+  if (json.error) throw new Error('Meta API: ' + json.error.message)
+  return json
+}
+
+async function sbPost(table, body) {
+  var url = SUPABASE_URL + '/rest/v1/' + table
+  var res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify(body)
+  })
+  return res.ok
+}
+
+async function sbGet(table, query) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + (query || '')
+  var res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  })
+  return res.json()
+}
+
+function extractAction(actions, type) {
+  if (!actions) return 0
+  var a = actions.find(function(x) { return x.action_type === type })
+  return a ? parseFloat(a.value || 0) : 0
+}
+
+exports.handler = async (event) => {
+  var headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json'
+  }
+
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' }
+
+  try {
+    if (!META_TOKEN) throw new Error('META_ACCESS_TOKEN nao configurado no Netlify')
+
+    var body = {}
+    try { body = JSON.parse(event.body || '{}') } catch(e) {}
+
+    var days = parseInt(body.days || 7)
+    var now = new Date()
+    var dateStart = new Date(now.getTime() - days * 86400000).toISOString().split('T')[0]
+    var dateEnd = now.toISOString().split('T')[0]
+    var timeRange = JSON.stringify({ since: dateStart, until: dateEnd })
+
+    // Busca contas cadastradas no dashboard
+    var accounts = await sbGet('meta_accounts', '?ativo=eq.true')
+    if (!Array.isArray(accounts) || accounts.length === 0) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: 'Nenhuma conta cadastrada. Adicione em Inteligencia > Gerenciar Contas.' })
+      }
+    }
+
+    var totalSynced = 0
+    var errors = []
+
+    for (var ai = 0; ai < accounts.length; ai++) {
+      var account = accounts[ai]
+      var actId = account.account_id
+
+      try {
+        // Dados diarios da conta
+        var insights = await metaGet('/' + actId + '/insights', {
+          fields: 'spend,impressions,clicks,actions,cpm,cpc,ctr,cpp',
+          time_range: timeRange,
+          time_increment: 1,
+          level: 'account'
+        })
+
+        var rows = insights.data || []
+        for (var ri = 0; ri < rows.length; ri++) {
+          var row = rows[ri]
+          var msgs = extractAction(row.actions, 'onsite_conversion.messaging_conversation_started_7d')
+          var purchases = extractAction(row.actions, 'purchase')
+          await sbPost('meta_ads_daily', {
+            data: row.date_start,
+            account_id: actId,
+            account_name: account.nome,
+            spend: parseFloat(row.spend || 0),
+            impressions: parseInt(row.impressions || 0),
+            clicks: parseInt(row.clicks || 0),
+            messages: Math.round(msgs),
+            purchases: Math.round(purchases),
+            cpm: parseFloat(row.cpm || 0),
+            cpc: parseFloat(row.cpc || 0),
+            ctr: parseFloat(row.ctr || 0),
+            cpp: parseFloat(row.cpp || 0)
+          })
+          totalSynced++
+        }
+
+        // Dados por criativo
+        var adInsights = await metaGet('/' + actId + '/insights', {
+          fields: 'ad_name,adset_name,campaign_name,ad_id,adset_id,campaign_id,spend,impressions,clicks,ctr,cpm,cpp,actions,cost_per_action_type',
+          time_range: timeRange,
+          time_increment: 1,
+          level: 'ad',
+          limit: 200
+        })
+
+        var adRows = adInsights.data || []
+        for (var adi = 0; adi < adRows.length; adi++) {
+          var ad = adRows[adi]
+          var adMsgs = extractAction(ad.actions, 'onsite_conversion.messaging_conversation_started_7d')
+          var adPurchases = extractAction(ad.actions, 'purchase')
+          var cpa = ad.cost_per_action_type || []
+          var costPerMsg = 0
+          cpa.forEach(function(a) {
+            if (a.action_type === 'onsite_conversion.messaging_conversation_started_7d') {
+              costPerMsg = parseFloat(a.value || 0)
+            }
+          })
+          await sbPost('meta_criativos', {
+            data: ad.date_start,
+            account_id: actId,
+            campaign_id: ad.campaign_id || '',
+            campaign_name: ad.campaign_name || '',
+            adset_id: ad.adset_id || '',
+            adset_name: ad.adset_name || '',
+            ad_id: ad.ad_id || '',
+            ad_name: ad.ad_name || '',
+            spend: parseFloat(ad.spend || 0),
+            impressions: parseInt(ad.impressions || 0),
+            clicks: parseInt(ad.clicks || 0),
+            messages: Math.round(adMsgs),
+            purchases: Math.round(adPurchases),
+            ctr: parseFloat(ad.ctr || 0),
+            cpm: parseFloat(ad.cpm || 0),
+            cpp: parseFloat(ad.cpp || 0),
+            cost_per_message: costPerMsg
+          })
+        }
+
+      } catch(e) {
+        errors.push(account.nome + ': ' + e.message)
+      }
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        synced: totalSynced,
+        accounts: accounts.length,
+        period: dateStart + ' ate ' + dateEnd,
+        errors: errors.length > 0 ? errors : undefined
+      })
+    }
+
+  } catch (err) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) }
+  }
+}
