@@ -4,3 +4,9 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[[plugins]]
+  package = "@netlify/plugin-cron"
+
+  [plugins.inputs.crons]
+  "*/15 * * * *" = "/.netlify/functions/meta-sync-cron"
