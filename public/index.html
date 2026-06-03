@@ -1084,7 +1084,7 @@ function renderDre() {
       '<td><span class="badge" style="background:rgba(255,255,255,0.06);color:var(--muted2)">' + (d.categoria||'-') + '</span></td>' +
       '<td style="color:var(--muted);font-size:.75rem">' + fmtDate(d.data_pagamento) + '</td>' +
       '<td class="val-neg">-' + Rd(d.valor) + '</td>' +
-      '<td><button class="btn-icon" onclick="deletarDespesa('' + d.id + '')" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>' +
+      '<td><button class="btn-icon del-despesa" data-id="' + d.id + '" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>' +
       '</tr>'
   })
   if (!tbody) tbody = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">Nenhuma despesa lançada neste período.</td></tr>'
@@ -1207,8 +1207,8 @@ function deletarDespesa(id) {
     body: JSON.stringify({ action: 'delete_despesa', id: id })
   })
   .then(function(r) { return r.json() })
-  .then(function(d) {
-    if (d.error) { alert('Erro: ' + d.error); return }
+  .then(function(res) {
+    if (res && res.error) { alert('Erro: ' + res.error); return }
     state.despesas = state.despesas.filter(function(x) { return x.id !== id })
     renderDre()
   })
@@ -1223,6 +1223,15 @@ function deletarConta(id) {
 
 // ─── INIT ────────────────────────────────────────────────────
 loadData()
+
+// Event delegation para botoes dinamicos
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.del-despesa')
+  if (btn) {
+    var id = btn.getAttribute('data-id')
+    if (id) deletarDespesa(id)
+  }
+})
 </script>
 </body>
 </html>
