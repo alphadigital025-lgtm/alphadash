@@ -583,7 +583,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th>Valor</th></tr></thead>
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th>Valor</th><th></th></tr></thead>
             <tbody id="tbodyDespesas"></tbody>
           </table>
         </div>
@@ -1189,6 +1189,13 @@ function salvarConta() {
   if (!nome || !id) { alert('Nome e ID são obrigatórios!'); return }
   fetch(API + '/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add_conta', nome: nome, account_id: id }) })
   .then(function() { el('cNome').value = ''; el('cId').value = ''; loadData(); renderContasModal() })
+}
+
+function deletarDespesa(id) {
+  if (!confirm('Excluir esta despesa?')) return
+  fetch(API + '/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_despesa', id: id }) })
+  .then(function() { loadData() })
+  .catch(function(e) { alert('Erro: ' + e.message) })
 }
 
 function deletarConta(id) {
