@@ -1259,6 +1259,21 @@ function deletarConta(id) {
 // ─── INIT ────────────────────────────────────────────────────
 loadData()
 
+// Auto-refresh dados a cada 5 minutos
+setInterval(function() {
+  loadData()
+}, 5 * 60 * 1000)
+
+// Auto-sync Meta Ads a cada 15 minutos
+setInterval(function() {
+  var days = el('selectRange').value
+  fetch(API + '/meta-sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ days: parseInt(days) })
+  }).then(function() { loadData() }).catch(function() {})
+}, 15 * 60 * 1000)
+
 // Event delegation para botoes dinamicos
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.del-despesa')
