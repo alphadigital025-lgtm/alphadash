@@ -60,6 +60,11 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers, body: JSON.stringify({ success: true }) }
     }
 
+    if (body.action === 'delete_despesa') {
+      await sb('DELETE', 'despesas', null, '?id=eq.' + body.id)
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true }) }
+    }
+
     if (body.action === 'add_despesa') {
       await sb('POST', 'despesas', {
         descricao: body.descricao,
