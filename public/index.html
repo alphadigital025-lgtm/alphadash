@@ -1207,7 +1207,11 @@ function deletarDespesa(id) {
     body: JSON.stringify({ action: 'delete_despesa', id: id })
   })
   .then(function(r) { return r.json() })
-  .then(function() { loadData() })
+  .then(function(d) {
+    if (d.error) { alert('Erro: ' + d.error); return }
+    state.despesas = state.despesas.filter(function(x) { return x.id !== id })
+    renderDre()
+  })
   .catch(function(e) { alert('Erro: ' + e.message) })
 }
 
