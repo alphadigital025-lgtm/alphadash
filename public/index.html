@@ -795,7 +795,7 @@ function getMetrics(filter) {
   var gastoMeta = gastoMetaRaw
   var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
   var roas = gastoMeta > 0 ? faturamento / gastoMeta : 0
-  var lucroLiq = faturamento - gastoMeta
+  var lucroLiq = faturamento - (gastoMeta * 1.1215)
   var cpa = totalVendas > 0 ? gastoMeta / totalVendas : 0
   var ticket = totalVendas > 0 ? faturamento / totalVendas : 0
   var conv = mensagens > 0 ? (totalVendas / mensagens * 100) : 0
