@@ -61,8 +61,10 @@ exports.handler = async (event) => {
 
     var days = parseInt(body.days || 7)
     var now = new Date()
-    var dateStart = new Date(now.getTime() - days * 86400000).toISOString().split('T')[0]
-    var dateEnd = now.toISOString().split('T')[0]
+    var today = now.toISOString().split('T')[0]
+    // days=1 = hoje only, days=7 = ultimos 7 dias, etc
+    var dateStart = days <= 1 ? today : new Date(now.getTime() - (days - 1) * 86400000).toISOString().split('T')[0]
+    var dateEnd = today
     var timeRange = JSON.stringify({ since: dateStart, until: dateEnd })
 
     // Busca contas cadastradas no dashboard
