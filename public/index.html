@@ -792,7 +792,7 @@ function getMetrics(filter) {
   var faturamento = pagas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
   var totalVendas = pagas.length
   var gastoMetaRaw = state.metaAds.reduce(function(s,m) { return s + (m.spend||0) }, 0)
-  var gastoMeta = gastoMetaRaw * 1.1215
+  var gastoMeta = gastoMetaRaw
   var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
   var roas = gastoMeta > 0 ? faturamento / gastoMeta : 0
   var lucroLiq = faturamento - gastoMeta
@@ -899,10 +899,10 @@ function renderComercial() {
     kpiCard('Faturamento', R(m.faturamento), 'Ticket médio ' + R(m.ticket), false) +
     kpiCard('Taxa de Conversão', m.conv.toFixed(1) + '%', m.totalVendas + ' vendas / ' + m.mensagens + ' leads', false) +
     kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
-    kpiCard('CPA (Vendedor)', R(m.cpa), 'Com imposto de 12,15%', true)
+    kpiCard('CPA (Vendedor)', R(m.cpa), 'Gasto Meta / Vendas', true)
 
   el('kpiComercial2').innerHTML =
-    kpiCard('Gasto em Tráfego (Total)', R(m.gastoMeta), 'Inclui imposto de 12,15% · BRL', true) +
+    kpiCard('Gasto em Tráfego (Total)', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
     kpiCard('Msgs Meta', m.mensagens, 'Mensagens iniciadas · todas as campanhas', false)
 
   // Funil
@@ -942,7 +942,7 @@ function renderRanking() {
   el('kpiRanking').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), R(m.faturamento), false) +
     kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Aguardando Meta Ads', true)
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true)
 
   if (state.vendedores.length === 0) {
     el('rankingList').innerHTML = '<div class="card"><div class="empty-state"><p>Nenhum vendedor cadastrado. Acesse Comercial → Gerenciar Equipe.</p></div></div>'
@@ -974,7 +974,7 @@ function renderRanking() {
 // ─── INTELIGENCIA ─────────────────────────────────────────────
 function renderInteligencia() {
   var gastoMetaRaw = state.metaAds.reduce(function(s,m) { return s + (m.spend||0) }, 0)
-  var gastoMeta = gastoMetaRaw * 1.1215
+  var gastoMeta = gastoMetaRaw
   var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
   var compras = state.metaAds.reduce(function(s,m) { return s + (m.purchases||0) }, 0)
   var cpm = state.metaAds.length > 0 ? state.metaAds.reduce(function(s,m) { return s + (m.cpm||0) }, 0) / state.metaAds.length : 0
@@ -985,8 +985,8 @@ function renderInteligencia() {
   var cpm_msg_imp = mensagens > 0 ? gastoMeta / mensagens : 0
   el('kpiInteligencia').innerHTML =
     kpiCard('Criativos Ativos', state.criativos.length, state.metaAccounts.length + ' contas ativas', false) +
-    kpiCard('Gasto FB Ads', R(gastoMeta), 'Inclui imposto de 12,15% · BRL', true) +
-    kpiCard('Custo/Mensagem', mensagens > 0 ? R(cpm_msg_imp) : '—', 'BRL · com imposto 12,15%', false) +
+    kpiCard('Gasto FB Ads', R(gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
+    kpiCard('Custo/Mensagem', mensagens > 0 ? R(cpm_msg_imp) : '—', 'BRL · média ponderada', false) +
     kpiCard('Vendas Meta (Pixel)', compras, 'Todas as contas ativas', false) +
     kpiCard('CPM Médio', R(cpm), 'CPM médio · BRL', false)
 
@@ -1030,7 +1030,7 @@ function renderFolha() {
 
   el('kpiFolha').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), 'Receita bruta do período', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads + 12,15% imposto', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
     kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
     kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
     kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
@@ -1079,7 +1079,7 @@ function renderDre() {
 
   el('kpiDre2').innerHTML =
     kpiCard('Faturamento', R(m.faturamento), 'Receita bruta', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads + 12,15% imposto', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
     kpiCard('Folha', R(custoEquipe), 'Salários base', false)
 
   el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
