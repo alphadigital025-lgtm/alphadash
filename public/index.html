@@ -454,7 +454,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="g4" id="kpiGlobal"></div>
       <div class="card" style="margin-bottom:16px;">
         <div class="card-title"><div class="card-title-dot"></div>Evolução de Receita — Período Selecionado</div>
-        <canvas id="chartEvolucao" height="260"></canvas>
+        <canvas id="chartEvolucao" height="160"></canvas>
       </div>
       <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <span style="width:4px;height:14px;background:var(--teal2);border-radius:2px;display:inline-block;"></span>
@@ -863,17 +863,18 @@ function renderGlobal() {
     data: {
       labels: labels,
       datasets: [
-        { label: 'Vendas', data: vendaData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.08)', tension: .4, fill: true, pointRadius: 3, pointBackgroundColor: '#14b8a6' },
-        { label: 'Pendentes', data: pendData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: .4, fill: true, pointRadius: 3, borderDash: [5,5] },
-        { label: 'Gasto FB Ads', data: adsData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: .4, fill: true, pointRadius: 3 }
+        { label: 'Vendas', data: vendaData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.08)', tension: .4, fill: true, pointRadius: 2, pointBackgroundColor: '#14b8a6', borderWidth: 2 },
+        { label: 'Pendentes', data: pendData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', tension: .4, fill: true, pointRadius: 2, borderDash: [4,4], borderWidth: 2 },
+        { label: 'Gasto FB Ads', data: adsData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', tension: .4, fill: true, pointRadius: 2, borderWidth: 2 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      animation: { duration: 300 },
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 10 } } },
       scales: {
-        x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { ticks: { color: '#475569', font: { size: 10 }, callback: function(v) { return 'R$'+(v/1000).toFixed(0)+'k' } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        x: { ticks: { color: '#475569', font: { size: 9 }, maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: { ticks: { color: '#475569', font: { size: 9 }, maxTicksLimit: 5, callback: function(v) { return 'R$'+(v/1000).toFixed(0)+'k' } }, grid: { color: 'rgba(255,255,255,0.03)' } }
       }
     }
   })
