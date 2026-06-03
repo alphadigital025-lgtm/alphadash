@@ -24,7 +24,8 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' }
-  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+  // Sempre retorna 200 para a B4You nao retentar infinitamente
+  if (event.httpMethod !== 'POST') return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) }
 
   try {
     var body = JSON.parse(event.body || '{}')
@@ -136,6 +137,7 @@ exports.handler = async (event) => {
 
   } catch (err) {
     console.error('Webhook error:', err.message)
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) }
+    // Sempre retorna 200 para evitar retentativas infinitas da B4You
+    return { statusCode: 200, headers, body: JSON.stringify({ received: true, error: err.message }) }
   }
 }
