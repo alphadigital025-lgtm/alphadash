@@ -790,21 +790,22 @@ function getMetrics(filter) {
   var transacoes = filter === 'all' ? state.transacoes : state.transacoes.filter(function(t) { return t.src_vendedor === filter })
   var pagas = transacoes.filter(function(t) { return t.status === 'Pago' })
   var faturamento = pagas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+  var faturamentoLiq = faturamento * 0.70
   var totalVendas = pagas.length
   var gastoMetaRaw = state.metaAds.reduce(function(s,m) { return s + (m.spend||0) }, 0)
   var gastoMeta = gastoMetaRaw
   var mensagens = state.metaAds.reduce(function(s,m) { return s + (m.messages||0) }, 0)
-  var roas = gastoMeta > 0 ? faturamento / gastoMeta : 0
-  var lucroLiq = faturamento - (gastoMeta * 1.1215)
-  var cpa = totalVendas > 0 ? gastoMeta / totalVendas : 0
-  var ticket = totalVendas > 0 ? faturamento / totalVendas : 0
+  var roas = gastoMeta > 0 ? faturamentoLiq / (gastoMeta * 1.1215) : 0
+  var lucroLiq = faturamentoLiq - (gastoMeta * 1.1215)
+  var cpa = totalVendas > 0 ? (gastoMeta * 1.1215) / totalVendas : 0
+  var ticket = totalVendas > 0 ? faturamentoLiq / totalVendas : 0
   var conv = mensagens > 0 ? (totalVendas / mensagens * 100) : 0
   var porPag = {}
   pagas.forEach(function(t) {
     var k = t.forma_pagamento || 'Outro'
-    porPag[k] = (porPag[k]||0) + t.valor
+    porPag[k] = (porPag[k]||0) + (t.valor * 0.70)
   })
-  return { transacoes: transacoes, pagas: pagas, faturamento: faturamento, totalVendas: totalVendas, gastoMeta: gastoMeta, mensagens: mensagens, roas: roas, lucroLiq: lucroLiq, cpa: cpa, ticket: ticket, conv: conv, porPag: porPag }
+  return { transacoes: transacoes, pagas: pagas, faturamento: faturamento, faturamentoLiq: faturamentoLiq, totalVendas: totalVendas, gastoMeta: gastoMeta, mensagens: mensagens, roas: roas, lucroLiq: lucroLiq, cpa: cpa, ticket: ticket, conv: conv, porPag: porPag }
 }
 
 function kpiCard(label, value, sub, pink, badge_text) {
@@ -830,7 +831,7 @@ function renderGlobal() {
   el('chipDados').textContent = m.totalVendas > 0 ? '● Dados ao vivo' : '○ Aguardando dados'
 
   el('kpiGlobal').innerHTML =
-    kpiCard('Faturamento', R(m.faturamento), m.totalVendas + ' vendas aprovadas', false, 'VENDAS') +
+    kpiCard('Faturamento', R(m.faturamentoLiq), m.totalVendas + ' vendas aprovadas · 70%', false, 'VENDAS') +
     kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
     kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto ' + R(m.gastoMeta) : 'Aguardando Meta Ads API', false) +
     kpiCard('Qtd de Vendas', m.totalVendas, 'Transações aprovadas', false)
@@ -852,7 +853,7 @@ function renderGlobal() {
     var label = (d.getDate()) + '/' + (d.getMonth()+1)
     labels.push(label)
     var vSum = 0, pSum = 0, aSum = 0
-    state.transacoes.forEach(function(t) { if (t.data === k) { if (t.status === 'Pago') vSum += t.valor||0; else pSum += t.valor||0 } })
+    state.transacoes.forEach(function(t) { if (t.data === k) { if (t.status === 'Pago') vSum += (t.valor||0) * 0.70; else pSum += (t.valor||0) * 0.70 } })
     state.metaAds.forEach(function(ma) { if (ma.data === k) aSum += ma.spend||0 })
     vendaData.push(vSum); pendData.push(pSum); adsData.push(aSum)
   }
@@ -896,7 +897,7 @@ function renderComercial() {
   el('kpiComercial').innerHTML =
     kpiCard('Leads Recebidos', m.mensagens || '?', 'Msgs Meta — todas as campanhas', false) +
     kpiCard('Vendas', m.totalVendas, m.totalVendas + ' transações aprovadas', false, 'VENDA') +
-    kpiCard('Faturamento', R(m.faturamento), 'Ticket médio ' + R(m.ticket), false) +
+    kpiCard('Faturamento', R(m.faturamentoLiq), 'Ticket médio ' + R(m.ticket), false) +
     kpiCard('Taxa de Conversão', m.conv.toFixed(1) + '%', m.totalVendas + ' vendas / ' + m.mensagens + ' leads', false) +
     kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
     kpiCard('CPA (Vendedor)', R(m.cpa), 'Gasto Meta / Vendas', true)
@@ -940,7 +941,7 @@ function renderRanking() {
   el('rankingAtualizado').textContent = 'Classificação por faturamento no período selecionado · atualizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
 
   el('kpiRanking').innerHTML =
-    kpiCard('Faturamento Total', R(m.faturamento), R(m.faturamento), false) +
+    kpiCard('Faturamento Total', R(m.faturamentoLiq), '70% comissão afiliado', false) +
     kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true)
 
@@ -1029,7 +1030,7 @@ function renderFolha() {
   el('chipVendedores').textContent = state.vendedores.length + ' vendedor' + (state.vendedores.length !== 1 ? 'es' : '') + ' ativo' + (state.vendedores.length !== 1 ? 's' : '')
 
   el('kpiFolha').innerHTML =
-    kpiCard('Faturamento Total', R(m.faturamento), 'Receita bruta do período', false) +
+    kpiCard('Faturamento Total', R(m.faturamento), 'Valor cheio · base comissões', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
     kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
     kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
@@ -1069,7 +1070,7 @@ function renderFolha() {
 function renderDre() {
   var m = getMetrics('all')
   var totalDespesas = state.despesas.reduce(function(s,d) { return s + (d.valor||0) }, 0)
-  var lucroFinal = m.faturamento - m.gastoMeta - totalDespesas
+  var lucroFinal = m.faturamentoLiq - (m.gastoMeta * 1.1215) - totalDespesas
   var custoEquipe = state.vendedores.reduce(function(s,v) { return s + (v.salario_fixo||0) }, 0)
 
   el('kpiDre').innerHTML =
@@ -1078,7 +1079,7 @@ function renderDre() {
     kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Folha − Despesas', lucroFinal < 0)
 
   el('kpiDre2').innerHTML =
-    kpiCard('Faturamento', R(m.faturamento), 'Receita bruta', false) +
+    kpiCard('Faturamento', R(m.faturamentoLiq), 'Receita líquida 70%', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
     kpiCard('Folha', R(custoEquipe), 'Salários base', false)
 
