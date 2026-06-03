@@ -942,7 +942,7 @@ function renderRanking() {
   el('kpiRanking').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), R(m.faturamento), false) +
     kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true)
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true)
 
   if (state.vendedores.length === 0) {
     el('rankingList').innerHTML = '<div class="card"><div class="empty-state"><p>Nenhum vendedor cadastrado. Acesse Comercial → Gerenciar Equipe.</p></div></div>'
@@ -1030,7 +1030,7 @@ function renderFolha() {
 
   el('kpiFolha').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), 'Receita bruta do período', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
     kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
     kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
     kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
@@ -1079,7 +1079,7 @@ function renderDre() {
 
   el('kpiDre2').innerHTML =
     kpiCard('Faturamento', R(m.faturamento), 'Receita bruta', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
     kpiCard('Folha', R(custoEquipe), 'Salários base', false)
 
   el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
