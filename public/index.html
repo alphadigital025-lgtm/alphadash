@@ -434,7 +434,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <option value="7" selected>Últimos 7 dias</option>
         <option value="15">Últimos 15 dias</option>
         <option value="30">Últimos 30 dias</option>
-        <option value="999">Este mês</option>
+        <option value="31">Este mês</option>
       </select>
     </div>
   </header>
@@ -832,7 +832,7 @@ function renderGlobal() {
   el('kpiGlobal').innerHTML =
     kpiCard('Faturamento', R(m.faturamento), m.totalVendas + ' vendas aprovadas', false, 'VENDAS') +
     kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
-    kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto ' + R(m.gastoMeta * 1.1215) : 'Aguardando Meta Ads API', false) +
+    kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto ' + R(m.gastoMeta) : 'Aguardando Meta Ads API', false) +
     kpiCard('Qtd de Vendas', m.totalVendas, 'Transações aprovadas', false)
 
   // Progresso meta sidebar
@@ -899,10 +899,10 @@ function renderComercial() {
     kpiCard('Faturamento', R(m.faturamento), 'Ticket médio ' + R(m.ticket), false) +
     kpiCard('Taxa de Conversão', m.conv.toFixed(1) + '%', m.totalVendas + ' vendas / ' + m.mensagens + ' leads', false) +
     kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
-    kpiCard('CPA (Vendedor)', R(m.cpa * 1.1215), 'Com imposto de 12,15%', true)
+    kpiCard('CPA (Vendedor)', R(m.cpa), 'Com imposto de 12,15%', true)
 
   el('kpiComercial2').innerHTML =
-    kpiCard('Gasto em Tráfego (Total)', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
+    kpiCard('Gasto em Tráfego (Total)', R(m.gastoMeta), 'Inclui imposto de 12,15% · BRL', true) +
     kpiCard('Msgs Meta', m.mensagens, 'Mensagens iniciadas · todas as campanhas', false)
 
   // Funil
@@ -982,14 +982,13 @@ function renderInteligencia() {
 
   el('chipCriativos').textContent = state.criativos.length > 0 ? '● ' + state.criativos.length + ' criativos ativos' : '○ Nenhum criativo'
 
-  var gastoComImposto = gastoMeta * 1.1215
-  var cpm_msg_imp = mensagens > 0 ? gastoComImposto / mensagens : 0
+  var cpm_msg_imp = mensagens > 0 ? gastoMeta / mensagens : 0
   el('kpiInteligencia').innerHTML =
     kpiCard('Criativos Ativos', state.criativos.length, state.metaAccounts.length + ' contas ativas', false) +
-    kpiCard('Gasto FB Ads', R(gastoComImposto), 'Inclui imposto de 12,15% · BRL', true) +
+    kpiCard('Gasto FB Ads', R(gastoMeta), 'Inclui imposto de 12,15% · BRL', true) +
     kpiCard('Custo/Mensagem', mensagens > 0 ? R(cpm_msg_imp) : '—', 'BRL · com imposto 12,15%', false) +
     kpiCard('Vendas Meta (Pixel)', compras, 'Todas as contas ativas', false) +
-    kpiCard('CPM Médio', R(cpm * 1.1215), 'Com imposto de 12,15%', false)
+    kpiCard('CPM Médio', R(cpm), 'CPM médio · BRL', false)
 
   // Contas
   var contasHtml = ''
@@ -1007,8 +1006,8 @@ function renderInteligencia() {
   state.criativos.slice(0, 20).forEach(function(c) {
     tbody += '<tr>' +
       '<td><div style="font-weight:600">' + (c.ad_name||'-') + '</div><div style="font-size:.68rem;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">' + (c.campaign_name||'') + '</div></td>' +
-      '<td style="font-family:JetBrains Mono,monospace">' + (c.spend ? R(c.spend * 1.1215) : '-') + '</td>' +
-      '<td class="val-cyan">' + (c.cost_per_message > 0 ? R(c.cost_per_message * 1.1215) : '—') + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace">' + (c.spend ? R(c.spend) : '-') + '</td>' +
+      '<td class="val-cyan">' + (c.cost_per_message > 0 ? R(c.cost_per_message) : '—') + '</td>' +
       '<td style="font-family:JetBrains Mono,monospace">' + (c.messages||0).toLocaleString('pt-BR') + '</td>' +
       '<td style="color:#a78bfa;font-family:JetBrains Mono,monospace">' + (c.purchases > 0 ? c.purchases : '—') + '</td>' +
       '<td style="font-family:JetBrains Mono,monospace">' + (c.ctr > 0 ? c.ctr.toFixed(2)+'%' : '—') + '</td>' +
@@ -1031,7 +1030,7 @@ function renderFolha() {
 
   el('kpiFolha').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), 'Receita bruta do período', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Meta Ads + 12,15% imposto', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads + 12,15% imposto', true) +
     kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
     kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
     kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
@@ -1080,7 +1079,7 @@ function renderDre() {
 
   el('kpiDre2').innerHTML =
     kpiCard('Faturamento', R(m.faturamento), 'Receita bruta', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Meta Ads + 12,15% imposto', true) +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta), 'Meta Ads + 12,15% imposto', true) +
     kpiCard('Folha', R(custoEquipe), 'Salários base', false)
 
   el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
