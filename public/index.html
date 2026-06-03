@@ -1234,11 +1234,7 @@ function syncMeta() {
     if (d.error) { alert('Erro: ' + d.error); return }
     if (d.message) { alert(d.message); return }
     var msg = 'Sincronizado! ' + d.synced + ' registros de ' + d.accounts + ' conta(s).'
-    if (d.errors && d.errors.length > 0) msg += '
-
-Erros:
-' + d.errors.join('
-')
+    if (d.errors && d.errors.length > 0) msg += ' | Erros: ' + d.errors.join(', ')
     alert(msg)
     loadData()
   })
