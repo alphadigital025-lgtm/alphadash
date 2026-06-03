@@ -65,7 +65,7 @@ exports.handler = async (event) => {
 
       // SRC do atendente - verifica em todos os lugares possiveis
       var params = event.queryStringParameters || {}
-      var srcVendedor = params.src
+      var srcVendedor = String(params.src
         || body.src
         || body.utm_source
         || body.tracking
@@ -74,7 +74,7 @@ exports.handler = async (event) => {
         || (body.tracking_parameters && body.tracking_parameters.utm_source)
         || (body.metadata && body.metadata.src)
         || (body.customer && body.customer.src)
-        || ''
+        || 'desconhecido')
 
       // Data
       var data = body.paid_at ? body.paid_at.split('T')[0] : new Date().toISOString().split('T')[0]
