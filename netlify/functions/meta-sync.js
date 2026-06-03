@@ -116,6 +116,11 @@ exports.handler = async (event) => {
         var rows = insights.data || []
         for (var ri = 0; ri < rows.length; ri++) {
           var row = rows[ri]
+          // Delete existing record for this day+account before inserting
+          await fetch(SUPABASE_URL + '/rest/v1/meta_ads_daily?data=eq.' + row.date_start + '&account_id=eq.' + actId, {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          })
           var msgs = extractAction(row.actions, 'onsite_conversion.messaging_conversation_started_7d')
           var purchases = extractAction(row.actions, 'purchase')
           var spendBrl = parseFloat(row.spend || 0) * fxRate
@@ -149,6 +154,11 @@ exports.handler = async (event) => {
         var adRows = adInsights.data || []
         for (var adi = 0; adi < adRows.length; adi++) {
           var ad = adRows[adi]
+          // Delete existing record for this day+ad before inserting
+          await fetch(SUPABASE_URL + '/rest/v1/meta_criativos?data=eq.' + ad.date_start + '&ad_id=eq.' + (ad.ad_id || ''), {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          })
           var adMsgs = extractAction(ad.actions, 'onsite_conversion.messaging_conversation_started_7d')
           var adPurchases = extractAction(ad.actions, 'purchase')
           var cpaArr = ad.cost_per_action_type || []
