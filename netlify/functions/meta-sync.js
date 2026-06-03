@@ -39,6 +39,18 @@ async function sbGet(table, query) {
   return res.json()
 }
 
+// Busca cotacao USD->BRL do dia
+async function getUsdToBrl() {
+  try {
+    var res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL')
+    var json = await res.json()
+    var rate = parseFloat(json.USDBRL.bid)
+    return isNaN(rate) ? 5.80 : rate
+  } catch(e) {
+    return 5.80 // fallback
+  }
+}
+
 function extractAction(actions, type) {
   if (!actions) return 0
   var a = actions.find(function(x) { return x.action_type === type })
@@ -62,12 +74,14 @@ exports.handler = async (event) => {
     var days = parseInt(body.days || 7)
     var now = new Date()
     var today = now.toISOString().split('T')[0]
-    // days=1 = hoje only, days=7 = ultimos 7 dias, etc
     var dateStart = days <= 1 ? today : new Date(now.getTime() - (days - 1) * 86400000).toISOString().split('T')[0]
     var dateEnd = today
     var timeRange = JSON.stringify({ since: dateStart, until: dateEnd })
 
-    // Busca contas cadastradas no dashboard
+    // Busca cotacao do dia
+    var usdToBrl = await getUsdToBrl()
+
+    // Busca contas cadastradas
     var accounts = await sbGet('meta_accounts', '?ativo=eq.true')
     if (!Array.isArray(accounts) || accounts.length === 0) {
       return {
@@ -85,6 +99,12 @@ exports.handler = async (event) => {
       var actId = account.account_id
 
       try {
+        // Busca info da conta para saber a moeda
+        var accountInfo = await metaGet('/' + actId, { fields: 'currency' })
+        var currency = accountInfo.currency || 'USD'
+        // Fator de conversao: se USD converte pra BRL, se BRL mantem
+        var fxRate = currency === 'USD' ? usdToBrl : 1.0
+
         // Dados diarios da conta
         var insights = await metaGet('/' + actId + '/insights', {
           fields: 'spend,impressions,clicks,actions,cpm,cpc,ctr,cpp',
@@ -98,19 +118,21 @@ exports.handler = async (event) => {
           var row = rows[ri]
           var msgs = extractAction(row.actions, 'onsite_conversion.messaging_conversation_started_7d')
           var purchases = extractAction(row.actions, 'purchase')
+          var spendBrl = parseFloat(row.spend || 0) * fxRate
           await sbPost('meta_ads_daily', {
             data: row.date_start,
             account_id: actId,
             account_name: account.nome,
-            spend: parseFloat(row.spend || 0),
+            spend: spendBrl,
             impressions: parseInt(row.impressions || 0),
             clicks: parseInt(row.clicks || 0),
             messages: Math.round(msgs),
             purchases: Math.round(purchases),
-            cpm: parseFloat(row.cpm || 0),
-            cpc: parseFloat(row.cpc || 0),
+            cpm: parseFloat(row.cpm || 0) * fxRate,
+            cpc: parseFloat(row.cpc || 0) * fxRate,
             ctr: parseFloat(row.ctr || 0),
-            cpp: parseFloat(row.cpp || 0)
+            cpp: parseFloat(row.cpp || 0) * fxRate,
+            currency: 'BRL'
           })
           totalSynced++
         }
@@ -129,11 +151,11 @@ exports.handler = async (event) => {
           var ad = adRows[adi]
           var adMsgs = extractAction(ad.actions, 'onsite_conversion.messaging_conversation_started_7d')
           var adPurchases = extractAction(ad.actions, 'purchase')
-          var cpa = ad.cost_per_action_type || []
+          var cpaArr = ad.cost_per_action_type || []
           var costPerMsg = 0
-          cpa.forEach(function(a) {
+          cpaArr.forEach(function(a) {
             if (a.action_type === 'onsite_conversion.messaging_conversation_started_7d') {
-              costPerMsg = parseFloat(a.value || 0)
+              costPerMsg = parseFloat(a.value || 0) * fxRate
             }
           })
           await sbPost('meta_criativos', {
@@ -145,15 +167,16 @@ exports.handler = async (event) => {
             adset_name: ad.adset_name || '',
             ad_id: ad.ad_id || '',
             ad_name: ad.ad_name || '',
-            spend: parseFloat(ad.spend || 0),
+            spend: parseFloat(ad.spend || 0) * fxRate,
             impressions: parseInt(ad.impressions || 0),
             clicks: parseInt(ad.clicks || 0),
             messages: Math.round(adMsgs),
             purchases: Math.round(adPurchases),
             ctr: parseFloat(ad.ctr || 0),
-            cpm: parseFloat(ad.cpm || 0),
-            cpp: parseFloat(ad.cpp || 0),
-            cost_per_message: costPerMsg
+            cpm: parseFloat(ad.cpm || 0) * fxRate,
+            cpp: parseFloat(ad.cpp || 0) * fxRate,
+            cost_per_message: costPerMsg,
+            currency: 'BRL'
           })
         }
 
@@ -169,6 +192,7 @@ exports.handler = async (event) => {
         success: true,
         synced: totalSynced,
         accounts: accounts.length,
+        usdToBrl: usdToBrl,
         period: dateStart + ' ate ' + dateEnd,
         errors: errors.length > 0 ? errors : undefined
       })
