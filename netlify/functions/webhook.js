@@ -76,13 +76,10 @@ exports.handler = async (event) => {
       var srcVendedor = srcRaw ? String(srcRaw) : 'desconhecido'
       console.log('SRC detectado:', srcVendedor)
 
-      // Cupom de desconto — extrai valor do nome (ex: cupom100 → 100)
-      var cupom = body.coupon || null
-      var desconto = 0
-      if (cupom) {
-        var match = String(cupom).match(/\d+/)
-        if (match) desconto = parseFloat(match[0])
-      }
+      // Cupom de desconto — body.coupon é um objeto { name, amount, type }
+      var cupomObj = body.coupon || null
+      var cupom = cupomObj ? cupomObj.name : null
+      var desconto = cupomObj ? parseFloat(cupomObj.amount || 0) : 0
       console.log('CUPOM detectado:', cupom, '| Desconto:', desconto)
 
       // Data
