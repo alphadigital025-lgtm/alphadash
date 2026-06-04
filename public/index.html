@@ -938,12 +938,20 @@ function getBonusDiario(vendas) {
 
 function renderFolha() {
   var m = getMetrics('all')
+  // *** TRAVADO NO CICLO 5→4 — ignora período selecionado no dashboard ***
+  var ciclo = getCicloAtual()
+  var cicloLabel = ciclo.inicio.split('-').reverse().join('/') + ' a ' + ciclo.fim.split('-').reverse().join('/')
 
-  // Calcula salário por escalão + bônus para cada vendedor
+  // Filtra transações do ciclo atual para escalão/bônus
+  var transacoesCiclo = state.transacoes.filter(function(t) {
+    return t.data >= ciclo.inicio && t.data <= ciclo.fim
+  })
+
+  // Calcula salário por escalão + bônus usando apenas transações do ciclo
   var totalSalarios = 0
   var totalBonus = 0
   state.vendedores.forEach(function(v) {
-    var vVendas = state.transacoes.filter(function(t) { return t.src_vendedor === v.src })
+    var vVendas = transacoesCiclo.filter(function(t) { return t.src_vendedor === v.src })
     var vFat = vVendas.filter(function(t) { return t.status === 'Pago' }).reduce(function(s,t) { return s + (t.valor||0) }, 0)
     var esc = getEscalao(vFat)
     var bonus = getBonusDiario(vVendas)
@@ -957,8 +965,8 @@ function renderFolha() {
   el('kpiFolha').innerHTML =
     kpiCard('Faturamento Total', R(m.faturamento), 'Valor cheio · base escalões', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
-    kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários por escalão + bônus + transportes', true) +
-    kpiCard('Total em Bônus', R(totalBonus), 'Bônus diários acumulados no período', false) +
+    kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários por escalão + bônus + transportes · ' + cicloLabel, true) +
+    kpiCard('Total em Bônus', R(totalBonus), 'Bônus diários acumulados · ' + cicloLabel, false) +
     kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
 
   if (state.vendedores.length === 0) {
@@ -968,13 +976,12 @@ function renderFolha() {
 
   var html = ''
   state.vendedores.forEach(function(v) {
-    // Usa TODAS as transações do atendente no período (não apenas pagas) para bônus diário
-    var vTodasVendas = state.transacoes.filter(function(t) { return t.src_vendedor === v.src })
-    var vVendas = vTodasVendas.filter(function(t) { return t.status === 'Pago' })
-    // Faturamento bruto (100%) para calcular escalão
-    var vFat = vVendas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+    // *** TRAVADO NO CICLO 5→4 — faturamento, escalão e bônus do ciclo atual ***
+    var vTodasCiclo = transacoesCiclo.filter(function(t) { return t.src_vendedor === v.src })
+    var vVendasCiclo = vTodasCiclo.filter(function(t) { return t.status === 'Pago' })
+    var vFat = vVendasCiclo.reduce(function(s,t) { return s + (t.valor||0) }, 0)
     var esc = getEscalao(vFat)
-    var bonus = getBonusDiario(vTodasVendas)
+    var bonus = getBonusDiario(vTodasCiclo)
     var total = esc.salario + bonus + (v.auxilio_transporte || 0)
     // Progresso até próximo escalão
     var metaEscalao = [50000, 70000, 100000, 120000, 130000]
@@ -983,17 +990,17 @@ function renderFolha() {
 
     html += '<div class="vendor-card">' +
       '<div class="vendor-card-header">' +
-        '<div><div class="vendor-name">' + v.nome + '</div><div class="vendor-src">SRC: ' + v.src + '</div></div>' +
+        '<div><div class="vendor-name">' + v.nome + '</div><div class="vendor-src">SRC: ' + v.src + ' · ciclo ' + cicloLabel + '</div></div>' +
         '<div class="vendor-total"><div class="vendor-total-val">' + R(total) + '</div><div class="vendor-total-label">folha total</div></div>' +
       '</div>' +
       '<div class="vendor-stats">' +
         '<div class="vendor-stat"><div class="vendor-stat-val">' + R(esc.salario) + '</div><div class="vendor-stat-label">' + esc.label + '</div></div>' +
         '<div class="vendor-stat"><div class="vendor-stat-val" style="color:var(--amber)">' + R(bonus) + '</div><div class="vendor-stat-label">Bônus Diário</div></div>' +
         '<div class="vendor-stat"><div class="vendor-stat-val">' + R(v.auxilio_transporte||0) + '</div><div class="vendor-stat-label">Transporte</div></div>' +
-        '<div class="vendor-stat"><div class="vendor-stat-val">' + vVendas.length + '</div><div class="vendor-stat-label">Vendas</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val">' + vVendasCiclo.length + '</div><div class="vendor-stat-label">Vendas no Ciclo</div></div>' +
       '</div>' +
       '<div class="progress-label">' +
-        '<span>Fat. bruto: ' + R(vFat) + '</span>' +
+        '<span>Fat. bruto ciclo: ' + R(vFat) + '</span>' +
         '<span>' + (esc.nivel < 6 ? 'Próx. escalão: ' + R(proxMeta) + ' · ' + metaPct.toFixed(0) + '%' : '🏆 Nível máximo') + '</span>' +
       '</div>' +
       '<div class="progress-bar"><div class="progress-fill" style="width:' + metaPct.toFixed(1) + '%"></div></div>' +
@@ -1048,18 +1055,30 @@ function renderDre() {
   var totalDespesas = state.despesas.reduce(function(s,d) { return s + (d.valor||0) }, 0)
   var lucroFinal = m.faturamentoLiq - (m.gastoMeta * 1.1215) - totalDespesas
   var folhaCiclo = getFolhaCiclo()
-  var lucroReal = m.faturamentoLiq - (m.gastoMeta * 1.1215) - totalDespesas - folhaCiclo.total
+  var ciclo = folhaCiclo.ciclo
+  var cicloLabel = ciclo.inicio.split('-').reverse().join('/') + ' a ' + ciclo.fim.split('-').reverse().join('/')
+
+  // *** LUCRO REAL: faturamento TRAVADO no ciclo 5→4 — ignora período selecionado ***
+  var transacoesCiclo = state.transacoes.filter(function(t) {
+    return t.status === 'Pago' && t.data >= ciclo.inicio && t.data <= ciclo.fim
+  })
+  var faturamentoCiclo = transacoesCiclo.reduce(function(s,t) { return s + valorLiq(t) }, 0)
+  var gastoCicloMeta = state.metaAds.reduce(function(s,ma) { return s + (ma.spend||0) }, 0) * 1.1215
+  var despesasCiclo = state.despesas.reduce(function(s,d) {
+    return (d.data_pagamento >= ciclo.inicio && d.data_pagamento <= ciclo.fim) ? s + (d.valor||0) : s
+  }, 0)
+  var lucroReal = faturamentoCiclo - gastoCicloMeta - despesasCiclo - folhaCiclo.total
 
   el('kpiDre').innerHTML =
-    kpiCard('Lucro Operacional', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Receita − Tráfego', m.lucroLiq < 0) +
+    kpiCard('Lucro Operacional', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Receita − Tráfego · período selecionado', m.lucroLiq < 0) +
     kpiCard('Total Custos Lançados', R(totalDespesas), totalDespesas === 0 ? '0 despesas no período' : state.despesas.length + ' despesas', false) +
-    kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Despesas', lucroFinal < 0) +
-    kpiCard('Lucro Líquido Real', (lucroReal < 0 ? '-' : '') + R(Math.abs(lucroReal)), 'Fat. − Tráfego − Despesas − Folha ciclo (' + folhaCiclo.ciclo.inicio.split('-').reverse().join('/') + ' a ' + folhaCiclo.ciclo.fim.split('-').reverse().join('/') + ')', lucroReal < 0)
+    kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Despesas · período selecionado', lucroFinal < 0) +
+    kpiCard('Lucro Líquido Real', (lucroReal < 0 ? '-' : '') + R(Math.abs(lucroReal)), 'Ciclo completo ' + cicloLabel + ' · Fat. − Tráfego − Despesas − Folha', lucroReal < 0)
 
   el('kpiDre2').innerHTML =
-    kpiCard('Faturamento', R(m.faturamentoLiq), '70% normal · 40% upsell', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
-    kpiCard('Folha do Ciclo', R(folhaCiclo.total), 'Escalões + bônus + transportes · ciclo completo', true)
+    kpiCard('Faturamento', R(faturamentoCiclo), 'Ciclo ' + cicloLabel + ' · 70%/40%', false) +
+    kpiCard('Gasto em Tráfego', R(gastoCicloMeta), 'Inclui imposto de 12,15%', true) +
+    kpiCard('Folha do Ciclo', R(folhaCiclo.total), 'Escalões + bônus + transportes · ' + cicloLabel, true)
 
   el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
 
