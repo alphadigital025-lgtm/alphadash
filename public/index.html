@@ -1478,7 +1478,7 @@ function dpRenderCalendar() {
     } else if (dp.startDate && dateStr === dp.startDate) {
       cls += ' dp-start dp-end'
     }
-    html += '<button class="' + cls + '" onclick="dpSelectDay('' + dateStr + '')">' + d + '</button>'
+    html += '<button class="' + cls + '" onclick="dpSelectDay(\'' + dateStr + '\')">' + d + '</button>'
   }
 
   el('dpDays').innerHTML = html
