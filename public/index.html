@@ -706,9 +706,9 @@ function renderGlobal() {
   var subLabel = m.totalVendas + ' vendas · ' + m.vendasNormais.length + ' normais (70%) · ' + m.vendasUpsell.length + ' upsells (40%)'
 
   el('kpiGlobal').innerHTML =
+    kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
     kpiCard('Faturamento', R(m.faturamentoLiq), subLabel, false, 'VENDAS') +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
-    kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
     kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto ' + R(m.gastoMeta) : 'Aguardando Meta Ads API', false) +
     kpiCard('Qtd de Vendas', m.totalVendas, m.vendasUpsell.length > 0 ? m.vendasUpsell.length + ' upsell(s) incluído(s)' : 'Transações aprovadas', false)
 
