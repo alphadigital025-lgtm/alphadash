@@ -553,8 +553,15 @@ function getComissao(transacao) {
 }
 
 // Calcula o valor líquido (com comissão aplicada) de uma transação
+// Subtrai o desconto do cupom antes de aplicar a comissão
 function valorLiq(transacao) {
-  return (transacao.valor || 0) * getComissao(transacao)
+  var valorReal = (transacao.valor || 0) - (transacao.desconto || 0)
+  return valorReal * getComissao(transacao)
+}
+
+// Valor bruto real (já com desconto do cupom aplicado)
+function valorBruto(transacao) {
+  return (transacao.valor || 0) - (transacao.desconto || 0)
 }
 
 // ─── NAVIGATION ─────────────────────────────────────────────
@@ -642,8 +649,8 @@ function getMetrics(filter) {
   var transacoes = filter === 'all' ? state.transacoes : state.transacoes.filter(function(t) { return t.src_vendedor === filter })
   var pagas = transacoes.filter(function(t) { return t.status === 'Pago' })
 
-  // Faturamento bruto (100% do valor)
-  var faturamento = pagas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+  // Faturamento bruto real (já com desconto do cupom aplicado)
+  var faturamento = pagas.reduce(function(s,t) { return s + valorBruto(t) }, 0)
 
   // *** CORREÇÃO UPSELL ***
   // Faturamento líquido: 70% para vendas normais, 40% para upsell
@@ -811,13 +818,14 @@ function renderComercial() {
       ? (t.produto||'-') + ' <span class="badge badge-upsell" style="font-size:.58rem;">UPSELL</span>'
       : (t.produto||'-')
     var cupomHtml = t.cupom
-      ? ' <span class="badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;font-size:.58rem;">CUPOM: ' + t.cupom + '</span>'
+      ? ' <span class="badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;font-size:.58rem;">CUPOM: ' + t.cupom + (t.desconto ? ' -' + Rd(t.desconto) : '') + '</span>'
       : ''
+    var valorExibido = t.desconto ? valorBruto(t) : t.valor
     tbody += '<tr>' +
       '<td style="color:var(--muted2)">' + fmtDate(t.data) + '</td>' +
       '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis">' + (t.cliente||'-') + '</td>' +
       '<td style="font-size:.72rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">' + prodHtml + cupomHtml + '</td>' +
-      '<td class="val-cyan">' + Rd(t.valor) + '</td>' +
+      '<td class="val-cyan">' + (t.desconto ? '<span style="text-decoration:line-through;opacity:.45;font-size:.72rem;">' + Rd(t.valor) + '</span> ' + Rd(valorExibido) : Rd(t.valor)) + '</td>' +
       '<td style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:' + (upsell ? '#f59e0b' : 'var(--teal2)') + '">' + Rd(comValor) + ' <span style="font-size:.65rem;opacity:.7;">(' + comPct + '%)</span></td>' +
       '<td>' + badge(t.status||'-', t.status==='Pago'?'badge-pago':'badge-pendente') + '</td>' +
       '<td>' + badge(t.forma_pagamento||'-', pagCls) + '</td>' +
@@ -955,7 +963,7 @@ function renderFolha() {
   var totalBonus = 0
   state.vendedores.forEach(function(v) {
     var vVendas = transacoesCiclo.filter(function(t) { return t.src_vendedor === v.src })
-    var vFat = vVendas.filter(function(t) { return t.status === 'Pago' }).reduce(function(s,t) { return s + (t.valor||0) }, 0)
+    var vFat = vVendas.filter(function(t) { return t.status === 'Pago' }).reduce(function(s,t) { return s + valorBruto(t) }, 0)
     var esc = getEscalao(vFat)
     var bonus = getBonusDiario(vVendas)
     totalSalarios += esc.salario + (v.auxilio_transporte || 0)
@@ -982,7 +990,7 @@ function renderFolha() {
     // *** TRAVADO NO CICLO 5→4 — faturamento, escalão e bônus do ciclo atual ***
     var vTodasCiclo = transacoesCiclo.filter(function(t) { return t.src_vendedor === v.src })
     var vVendasCiclo = vTodasCiclo.filter(function(t) { return t.status === 'Pago' })
-    var vFat = vVendasCiclo.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+    var vFat = vVendasCiclo.reduce(function(s,t) { return s + valorBruto(t) }, 0)
     var esc = getEscalao(vFat)
     var bonus = getBonusDiario(vTodasCiclo)
     var total = esc.salario + bonus + (v.auxilio_transporte || 0)
