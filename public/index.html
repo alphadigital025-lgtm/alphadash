@@ -905,22 +905,59 @@ function renderInteligencia() {
 }
 
 // ─── FOLHA ───────────────────────────────────────────────────
+
+// Retorna salário pelo escalão com base no faturamento bruto mensal do atendente
+function getEscalao(fat) {
+  if (fat >= 130000) return { nivel: 6, salario: 10000, label: 'Nível 6 (> R$ 130k)' }
+  if (fat >= 120000) return { nivel: 5, salario: 7000,  label: 'Nível 5 (≥ R$ 120k)' }
+  if (fat >= 100000) return { nivel: 4, salario: 5500,  label: 'Nível 4 (≥ R$ 100k)' }
+  if (fat >= 70000)  return { nivel: 3, salario: 3500,  label: 'Nível 3 (≥ R$ 70k)'  }
+  if (fat >= 50000)  return { nivel: 2, salario: 2500,  label: 'Nível 2 (≥ R$ 50k)'  }
+  return                     { nivel: 1, salario: 1500,  label: 'Nível 1 (< R$ 50k)'  }
+}
+
+// Calcula bônus diário acumulado para um atendente no período
+function getBonusDiario(vendas) {
+  // Agrupa vendas pagas por data
+  var porDia = {}
+  vendas.forEach(function(t) {
+    if (t.status === 'Pago') {
+      porDia[t.data] = (porDia[t.data] || 0) + (t.valor || 0)
+    }
+  })
+  var bonus = 0
+  Object.keys(porDia).forEach(function(dia) {
+    var fat = porDia[dia]
+    if (fat >= 10000)     bonus += 150
+    else if (fat >= 7000) bonus += 100
+    else if (fat >= 5000) bonus +=  50
+  })
+  return bonus
+}
+
 function renderFolha() {
   var m = getMetrics('all')
-  var custoEquipe = state.vendedores.reduce(function(s,v) { return s + (v.salario_fixo||0) + (v.auxilio_transporte||0) }, 0)
-  var totalCom = state.vendedores.reduce(function(s,v) {
-    // Comissão dos atendentes usa 100% do valor bruto como base (conforme regra do negócio)
-    var vFat = m.pagas.filter(function(t) { return t.src_vendedor === v.src }).reduce(function(ss,t) { return ss + (t.valor||0) }, 0)
-    return s + vFat * (v.comissao_pct||0) / 100
-  }, 0)
+
+  // Calcula salário por escalão + bônus para cada vendedor
+  var totalSalarios = 0
+  var totalBonus = 0
+  state.vendedores.forEach(function(v) {
+    var vVendas = state.transacoes.filter(function(t) { return t.src_vendedor === v.src })
+    var vFat = vVendas.filter(function(t) { return t.status === 'Pago' }).reduce(function(s,t) { return s + (t.valor||0) }, 0)
+    var esc = getEscalao(vFat)
+    var bonus = getBonusDiario(vVendas)
+    totalSalarios += esc.salario + (v.auxilio_transporte || 0)
+    totalBonus += bonus
+  })
+  var custoEquipe = totalSalarios + totalBonus
 
   el('chipVendedores').textContent = state.vendedores.length + ' vendedor' + (state.vendedores.length !== 1 ? 'es' : '') + ' ativo' + (state.vendedores.length !== 1 ? 's' : '')
 
   el('kpiFolha').innerHTML =
-    kpiCard('Faturamento Total', R(m.faturamento), 'Valor cheio · base comissões', false) +
+    kpiCard('Faturamento Total', R(m.faturamento), 'Valor cheio · base escalões', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
-    kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários + transportes', true) +
-    kpiCard('Total em Comissões', R(totalCom), 'Calculado sobre vendas', false) +
+    kpiCard('Custo Total Equipe', R(custoEquipe), 'Salários por escalão + bônus + transportes', true) +
+    kpiCard('Total em Bônus', R(totalBonus), 'Bônus diários acumulados no período', false) +
     kpiCard('Lucro Líquido Equipe', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Tráfego', m.lucroLiq < 0)
 
   if (state.vendedores.length === 0) {
@@ -930,24 +967,34 @@ function renderFolha() {
 
   var html = ''
   state.vendedores.forEach(function(v) {
-    var vVendas = m.pagas.filter(function(t) { return t.src_vendedor === v.src })
-    // Base para comissão do atendente: 100% do valor bruto
+    // Usa TODAS as transações do atendente no período (não apenas pagas) para bônus diário
+    var vTodasVendas = state.transacoes.filter(function(t) { return t.src_vendedor === v.src })
+    var vVendas = vTodasVendas.filter(function(t) { return t.status === 'Pago' })
+    // Faturamento bruto (100%) para calcular escalão
     var vFat = vVendas.reduce(function(s,t) { return s + (t.valor||0) }, 0)
-    var com = vFat * (v.comissao_pct||0) / 100
-    var total = (v.salario_fixo||0) + com + (v.auxilio_transporte||0)
-    var metaPct = v.meta_mensal > 0 ? Math.min(vFat / v.meta_mensal * 100, 100) : 0
+    var esc = getEscalao(vFat)
+    var bonus = getBonusDiario(vTodasVendas)
+    var total = esc.salario + bonus + (v.auxilio_transporte || 0)
+    // Progresso até próximo escalão
+    var metaEscalao = [50000, 70000, 100000, 120000, 130000]
+    var proxMeta = metaEscalao[esc.nivel - 1] || 130000
+    var metaPct = esc.nivel >= 6 ? 100 : Math.min(vFat / proxMeta * 100, 100)
+
     html += '<div class="vendor-card">' +
       '<div class="vendor-card-header">' +
         '<div><div class="vendor-name">' + v.nome + '</div><div class="vendor-src">SRC: ' + v.src + '</div></div>' +
         '<div class="vendor-total"><div class="vendor-total-val">' + R(total) + '</div><div class="vendor-total-label">folha total</div></div>' +
       '</div>' +
       '<div class="vendor-stats">' +
-        '<div class="vendor-stat"><div class="vendor-stat-val">' + R(v.salario_fixo||0) + '</div><div class="vendor-stat-label">Salário Fixo</div></div>' +
-        '<div class="vendor-stat"><div class="vendor-stat-val" style="color:var(--teal2)">' + R(com) + '</div><div class="vendor-stat-label">Comissão ' + (v.comissao_pct||0) + '%</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val">' + R(esc.salario) + '</div><div class="vendor-stat-label">' + esc.label + '</div></div>' +
+        '<div class="vendor-stat"><div class="vendor-stat-val" style="color:var(--amber)">' + R(bonus) + '</div><div class="vendor-stat-label">Bônus Diário</div></div>' +
         '<div class="vendor-stat"><div class="vendor-stat-val">' + R(v.auxilio_transporte||0) + '</div><div class="vendor-stat-label">Transporte</div></div>' +
         '<div class="vendor-stat"><div class="vendor-stat-val">' + vVendas.length + '</div><div class="vendor-stat-label">Vendas</div></div>' +
       '</div>' +
-      '<div class="progress-label"><span>Meta: ' + R(v.meta_mensal||0) + '</span><span>' + metaPct.toFixed(0) + '%</span></div>' +
+      '<div class="progress-label">' +
+        '<span>Fat. bruto: ' + R(vFat) + '</span>' +
+        '<span>' + (esc.nivel < 6 ? 'Próx. escalão: ' + R(proxMeta) + ' · ' + metaPct.toFixed(0) + '%' : '🏆 Nível máximo') + '</span>' +
+      '</div>' +
       '<div class="progress-bar"><div class="progress-fill" style="width:' + metaPct.toFixed(1) + '%"></div></div>' +
       '</div>'
   })
