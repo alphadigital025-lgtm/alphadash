@@ -76,9 +76,14 @@ exports.handler = async (event) => {
       var srcVendedor = srcRaw ? String(srcRaw) : 'desconhecido'
       console.log('SRC detectado:', srcVendedor)
 
-      // Cupom de desconto
+      // Cupom de desconto — extrai valor do nome (ex: cupom100 → 100)
       var cupom = body.coupon || null
-      console.log('CUPOM detectado:', cupom)
+      var desconto = 0
+      if (cupom) {
+        var match = String(cupom).match(/\d+/)
+        if (match) desconto = parseFloat(match[0])
+      }
+      console.log('CUPOM detectado:', cupom, '| Desconto:', desconto)
 
       // Data
       var data = body.paid_at ? body.paid_at.split('T')[0] : new Date().toISOString().split('T')[0]
@@ -102,7 +107,8 @@ exports.handler = async (event) => {
         vendedor_id: vendedor ? vendedor.id : null,
         vendedor_nome: vendedor ? vendedor.nome : (srcVendedor || 'Desconhecido'),
         sale_id: body.sale_id || null,
-        cupom: cupom
+        cupom: cupom,
+        desconto: desconto
       })
 
       if (error && error.message) throw new Error(error.message)
@@ -110,7 +116,7 @@ exports.handler = async (event) => {
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, vendedor: vendedor ? vendedor.nome : 'nao identificado', valor: valor, cupom: cupom })
+        body: JSON.stringify({ success: true, vendedor: vendedor ? vendedor.nome : 'nao identificado', valor: valor, cupom: cupom, desconto: desconto })
       }
 
     } else {
