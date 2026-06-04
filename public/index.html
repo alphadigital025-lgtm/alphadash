@@ -810,10 +810,13 @@ function renderComercial() {
     var prodHtml = upsell
       ? (t.produto||'-') + ' <span class="badge badge-upsell" style="font-size:.58rem;">UPSELL</span>'
       : (t.produto||'-')
+    var cupomHtml = t.cupom
+      ? ' <span class="badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;font-size:.58rem;">CUPOM: ' + t.cupom + '</span>'
+      : ''
     tbody += '<tr>' +
       '<td style="color:var(--muted2)">' + fmtDate(t.data) + '</td>' +
       '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis">' + (t.cliente||'-') + '</td>' +
-      '<td style="font-size:.72rem;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis">' + prodHtml + '</td>' +
+      '<td style="font-size:.72rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">' + prodHtml + cupomHtml + '</td>' +
       '<td class="val-cyan">' + Rd(t.valor) + '</td>' +
       '<td style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:' + (upsell ? '#f59e0b' : 'var(--teal2)') + '">' + Rd(comValor) + ' <span style="font-size:.65rem;opacity:.7;">(' + comPct + '%)</span></td>' +
       '<td>' + badge(t.status||'-', t.status==='Pago'?'badge-pago':'badge-pendente') + '</td>' +
