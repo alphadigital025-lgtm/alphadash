@@ -192,6 +192,65 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .spinner{width:36px;height:36px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading-text{font-size:.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* DATEPICKER */
+.btn-datepicker{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);font-size:.78rem;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:.15s;white-space:nowrap;
+  position:relative;
+}
+.btn-datepicker:hover{border-color:var(--teal);color:var(--teal);}
+.btn-datepicker svg{color:var(--muted2);}
+.datepicker-dropdown{
+  display:none;position:fixed;z-index:300;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:14px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  flex-direction:row;overflow:hidden;min-width:520px;
+}
+.datepicker-dropdown.open{display:flex;}
+.datepicker-shortcuts{
+  display:flex;flex-direction:column;padding:10px;gap:2px;
+  border-right:1px solid var(--border);min-width:145px;background:rgba(255,255,255,0.02);
+}
+.dp-shortcut{
+  background:none;border:none;color:var(--muted2);padding:8px 12px;
+  border-radius:7px;cursor:pointer;font-size:.78rem;font-weight:500;
+  text-align:left;font-family:'Inter',sans-serif;transition:.12s;
+}
+.dp-shortcut:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+.dp-shortcut.active{background:var(--teal3);color:var(--teal2);font-weight:700;}
+.datepicker-cal{padding:14px;flex:1;}
+.dp-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.dp-month-label{font-size:.85rem;font-weight:700;color:var(--text);}
+.dp-nav{
+  background:none;border:1px solid var(--border);border-radius:6px;
+  color:var(--muted2);cursor:pointer;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  transition:.12s;
+}
+.dp-nav:hover{border-color:var(--teal);color:var(--teal);}
+.dp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.dp-weekdays span{text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.8px;color:var(--muted);padding:4px 0;}
+.dp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-day{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;font-size:.78rem;cursor:pointer;transition:.1s;
+  color:var(--muted2);background:none;border:none;font-family:'Inter',sans-serif;
+}
+.dp-day:hover:not(.dp-empty):not(.dp-other){background:rgba(255,255,255,0.08);color:var(--text);}
+.dp-day.dp-empty,.dp-day.dp-other{cursor:default;color:transparent;}
+.dp-day.dp-today{color:var(--teal2);font-weight:700;}
+.dp-day.dp-in-range{background:var(--teal3);color:var(--teal2);border-radius:0;}
+.dp-day.dp-start{background:var(--teal);color:#fff;border-radius:6px 0 0 6px;font-weight:700;}
+.dp-day.dp-end{background:var(--teal);color:#fff;border-radius:0 6px 6px 0;font-weight:700;}
+.dp-day.dp-start.dp-end{border-radius:6px;}
+.dp-day.dp-disabled{opacity:.25;cursor:default;}
+.dp-range-hint{
+  margin-top:10px;font-size:.7rem;color:var(--muted);text-align:center;
+  padding:6px;background:rgba(255,255,255,0.03);border-radius:6px;
+}
 </style>
 </head>
 <body>
@@ -266,13 +325,35 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
         Atualizar
       </button>
-      <select class="select-range" id="selectRange" onchange="loadData()">
-        <option value="1">Hoje</option>
-        <option value="7" selected>Últimos 7 dias</option>
-        <option value="15">Últimos 15 dias</option>
-        <option value="30">Últimos 30 dias</option>
-        <option value="31">Este mês</option>
-      </select>
+      <button class="btn-datepicker" id="btnDatepicker" onclick="toggleDatepicker()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span id="dateRangeLabel">Últimos 7 dias</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <!-- DATEPICKER DROPDOWN -->
+      <div class="datepicker-dropdown" id="datepickerDropdown">
+        <div class="datepicker-shortcuts">
+          <button class="dp-shortcut active" onclick="setShortcut('Hoje',0)">Hoje</button>
+          <button class="dp-shortcut" onclick="setShortcut('Ontem',1)">Ontem</button>
+          <button class="dp-shortcut" onclick="setShortcut('Últimos 7 dias',6)">Últimos 7 dias</button>
+          <button class="dp-shortcut" onclick="setShortcut('Últimos 14 dias',13)">Últimos 14 dias</button>
+          <button class="dp-shortcut" onclick="setShortcut('Últimos 30 dias',29)">Últimos 30 dias</button>
+          <button class="dp-shortcut" onclick="setShortcut('Este mês', 'month')">Este mês</button>
+          <button class="dp-shortcut" onclick="setShortcut('Todo o período', 'all')">Todo o período</button>
+        </div>
+        <div class="datepicker-cal">
+          <div class="dp-cal-header">
+            <button class="dp-nav" onclick="dpNavMonth(-1)">&#8249;</button>
+            <span class="dp-month-label" id="dpMonthLabel"></span>
+            <button class="dp-nav" onclick="dpNavMonth(1)">&#8250;</button>
+          </div>
+          <div class="dp-weekdays">
+            <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+          </div>
+          <div class="dp-days" id="dpDays"></div>
+          <div class="dp-range-hint" id="dpRangeHint">Selecione a data inicial</div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -596,21 +677,51 @@ function closeModal(id) { el(id).classList.remove('open') }
 
 // ─── LOAD DATA ───────────────────────────────────────────────
 function loadData() {
-  var days = el('selectRange').value
+  loadDataByRange(dp.startDate, dp.endDate)
+}
+
+function loadDataByRange(startDate, endDate) {
   var btn = el('btnRefresh')
   btn.classList.add('spin')
   btn.disabled = true
 
-  fetch(API + '/data?days=' + days)
+  // Calculate days from range for the API (which expects ?days=N)
+  var start = new Date(startDate)
+  var end   = new Date(endDate)
+  var diffMs = end.getTime() - start.getTime()
+  var days = Math.max(1, Math.round(diffMs / 86400000) + 1)
+
+  // Use start date offset from today
+  var today = new Date()
+  var daysFromToday = Math.round((today.getTime() - start.getTime()) / 86400000) + 1
+  var fetchDays = Math.max(days, daysFromToday)
+
+  fetch(API + '/data?days=' + fetchDays)
     .then(function(r) { return r.json() })
     .then(function(d) {
       if (d.error) throw new Error(d.error)
-      state.transacoes = d.transacoes || []
+      // Filter to exact date range selected
+      var allTransacoes = d.transacoes || []
+      state.transacoes = allTransacoes.filter(function(t) {
+        return t.data >= startDate && t.data <= endDate
+      })
       state.vendedores = d.vendedores || []
-      state.metaAds = d.metaAds || []
+      // Filter meta ads to date range
+      var allMeta = d.metaAds || []
+      state.metaAds = allMeta.filter(function(m) {
+        return m.data >= startDate && m.data <= endDate
+      })
       state.metaAccounts = d.metaAccounts || []
-      state.criativos = d.criativos || []
-      state.despesas = d.despesas || []
+      var allCriativos = d.criativos || []
+      state.criativos = allCriativos.filter(function(c) {
+        return c.data >= startDate && c.data <= endDate
+      })
+      var allDespesas = d.despesas || []
+      state.despesas = allDespesas.filter(function(d) {
+        return d.data_pagamento >= startDate && d.data_pagamento <= endDate
+      })
+      // Keep full transacoes for cycle calculations (folha/DRE)
+      state.todasTransacoes = allTransacoes
       updateStatus()
       updateSelectFilter()
       var active = document.querySelector('.page.active')
@@ -954,7 +1065,8 @@ function renderFolha() {
   var cicloLabel = ciclo.inicio.split('-').reverse().join('/') + ' a ' + ciclo.fim.split('-').reverse().join('/')
 
   // Filtra transações do ciclo atual para escalão/bônus
-  var transacoesCiclo = state.transacoes.filter(function(t) {
+  var fonte = state.todasTransacoes || state.transacoes
+  var transacoesCiclo = fonte.filter(function(t) {
     return t.data >= ciclo.inicio && t.data <= ciclo.fim
   })
 
@@ -1252,13 +1364,179 @@ function deletarConta(id) {
   .then(function() { loadData(); renderContasModal() })
 }
 
+
+// ─── DATEPICKER ──────────────────────────────────────────────
+var dp = {
+  open: false,
+  viewYear: new Date().getFullYear(),
+  viewMonth: new Date().getMonth(),
+  startDate: null,
+  endDate: null,
+  selecting: false, // true = waiting for end date
+  activeShortcut: 'Últimos 7 dias'
+}
+
+// Initialize with default 7 days
+;(function() {
+  var now = new Date()
+  dp.endDate = now.toISOString().split('T')[0]
+  var s = new Date(now.getTime() - 6 * 86400000)
+  dp.startDate = s.toISOString().split('T')[0]
+})()
+
+function toggleDatepicker() {
+  dp.open = !dp.open
+  var dropdown = el('datepickerDropdown')
+  if (dp.open) {
+    dropdown.classList.add('open')
+    // Position below the button
+    var btn = el('btnDatepicker')
+    var rect = btn.getBoundingClientRect()
+    dropdown.style.top = (rect.bottom + 6) + 'px'
+    dropdown.style.right = (window.innerWidth - rect.right) + 'px'
+    dpRenderCalendar()
+  } else {
+    dropdown.classList.remove('open')
+  }
+}
+
+function closeDatepicker() {
+  dp.open = false
+  el('datepickerDropdown').classList.remove('open')
+}
+
+function setShortcut(label, value) {
+  dp.activeShortcut = label
+  dp.selecting = false
+  // Update active shortcut style
+  document.querySelectorAll('.dp-shortcut').forEach(function(b) { b.classList.remove('active') })
+  event.target.classList.add('active')
+
+  var now = new Date()
+  var todayStr = now.toISOString().split('T')[0]
+
+  if (value === 'month') {
+    // Este mês — dia 1 ao hoje
+    var firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    dp.startDate = firstDay.toISOString().split('T')[0]
+    dp.endDate = todayStr
+  } else if (value === 'all') {
+    // Todo o período — 2 anos atrás até hoje
+    var twoYears = new Date(now.getTime() - 730 * 86400000)
+    dp.startDate = twoYears.toISOString().split('T')[0]
+    dp.endDate = todayStr
+  } else if (value === 1) {
+    // Ontem
+    var yesterday = new Date(now.getTime() - 86400000)
+    dp.startDate = yesterday.toISOString().split('T')[0]
+    dp.endDate = yesterday.toISOString().split('T')[0]
+  } else {
+    // N dias atrás até hoje
+    var start = new Date(now.getTime() - value * 86400000)
+    dp.startDate = start.toISOString().split('T')[0]
+    dp.endDate = todayStr
+  }
+
+  el('dateRangeLabel').textContent = label
+  dpRenderCalendar()
+  applyDateRange()
+}
+
+function dpNavMonth(dir) {
+  dp.viewMonth += dir
+  if (dp.viewMonth > 11) { dp.viewMonth = 0; dp.viewYear++ }
+  if (dp.viewMonth < 0)  { dp.viewMonth = 11; dp.viewYear-- }
+  dpRenderCalendar()
+}
+
+function dpRenderCalendar() {
+  var months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']
+  el('dpMonthLabel').textContent = months[dp.viewMonth] + ' de ' + dp.viewYear
+
+  var firstDay = new Date(dp.viewYear, dp.viewMonth, 1)
+  var lastDay  = new Date(dp.viewYear, dp.viewMonth + 1, 0)
+  var today    = new Date().toISOString().split('T')[0]
+
+  // Monday-based offset (0=Mon ... 6=Sun)
+  var startOffset = (firstDay.getDay() + 6) % 7
+
+  var html = ''
+  // Empty cells before first day
+  for (var i = 0; i < startOffset; i++) {
+    html += '<button class="dp-day dp-empty" disabled></button>'
+  }
+
+  for (var d = 1; d <= lastDay.getDate(); d++) {
+    var dateStr = dp.viewYear + '-' + String(dp.viewMonth + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0')
+    var cls = 'dp-day'
+    if (dateStr === today) cls += ' dp-today'
+    if (dp.startDate && dp.endDate) {
+      if (dateStr === dp.startDate && dateStr === dp.endDate) cls += ' dp-start dp-end'
+      else if (dateStr === dp.startDate) cls += ' dp-start'
+      else if (dateStr === dp.endDate)   cls += ' dp-end'
+      else if (dateStr > dp.startDate && dateStr < dp.endDate) cls += ' dp-in-range'
+    } else if (dp.startDate && dateStr === dp.startDate) {
+      cls += ' dp-start dp-end'
+    }
+    html += '<button class="' + cls + '" onclick="dpSelectDay('' + dateStr + '')">' + d + '</button>'
+  }
+
+  el('dpDays').innerHTML = html
+
+  // Update hint
+  if (dp.selecting) {
+    el('dpRangeHint').textContent = 'Início: ' + fmtDate(dp.startDate) + ' — selecione a data final'
+  } else if (dp.startDate && dp.endDate) {
+    el('dpRangeHint').textContent = fmtDate(dp.startDate) + ' → ' + fmtDate(dp.endDate)
+  } else {
+    el('dpRangeHint').textContent = 'Selecione a data inicial'
+  }
+}
+
+function dpSelectDay(dateStr) {
+  if (!dp.selecting) {
+    // First click — set start
+    dp.startDate = dateStr
+    dp.endDate = null
+    dp.selecting = true
+    // Clear active shortcut
+    document.querySelectorAll('.dp-shortcut').forEach(function(b) { b.classList.remove('active') })
+    dp.activeShortcut = ''
+  } else {
+    // Second click — set end
+    if (dateStr < dp.startDate) {
+      dp.endDate = dp.startDate
+      dp.startDate = dateStr
+    } else {
+      dp.endDate = dateStr
+    }
+    dp.selecting = false
+    // Update label
+    el('dateRangeLabel').textContent = fmtDate(dp.startDate) + ' – ' + fmtDate(dp.endDate)
+    applyDateRange()
+  }
+  dpRenderCalendar()
+}
+
+function applyDateRange() {
+  closeDatepicker()
+  loadDataByRange(dp.startDate, dp.endDate)
+}
+
+// Close datepicker when clicking outside
+document.addEventListener('click', function(e) {
+  if (dp.open && !e.target.closest('#datepickerDropdown') && !e.target.closest('#btnDatepicker')) {
+    closeDatepicker()
+  }
+})
+
 // ─── INIT ────────────────────────────────────────────────────
 loadData()
 
 setInterval(function() { loadData() }, 5 * 60 * 1000)
 
 setInterval(function() {
-  var days = el('selectRange').value
+  var days = Math.max(1, Math.round((new Date(dp.endDate) - new Date(dp.startDate)) / 86400000) + 1)
   fetch(API + '/meta-sync', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
