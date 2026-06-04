@@ -288,7 +288,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <span style="width:4px;height:14px;background:var(--teal);border-radius:2px;display:inline-block;"></span>
         Faturamento & Performance
       </div>
-      <div class="g4" id="kpiGlobal"></div>
+      <div class="g5" id="kpiGlobal"></div>
       <div class="card" style="margin-bottom:16px;">
         <div class="card-title"><div class="card-title-dot"></div>Evolução de Receita — Período Selecionado</div>
         <canvas id="chartEvolucao" height="160"></canvas>
@@ -415,7 +415,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           Adicionar Despesa
         </button>
       </div>
-      <div class="g3" id="kpiDre" style="margin-bottom:16px;"></div>
+      <div class="g4" id="kpiDre" style="margin-bottom:16px;"></div>
       <div class="g3" id="kpiDre2" style="margin-bottom:16px;"></div>
       <div class="card">
         <div class="card-title" style="justify-content:space-between;">
@@ -707,6 +707,7 @@ function renderGlobal() {
 
   el('kpiGlobal').innerHTML =
     kpiCard('Faturamento', R(m.faturamentoLiq), subLabel, false, 'VENDAS') +
+    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
     kpiCard('Lucro Líquido', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Faturamento − Gasto Tráfego', m.lucroLiq < 0) +
     kpiCard('ROAS Geral', m.gastoMeta > 0 ? m.roas.toFixed(2) + 'x' : '—', m.gastoMeta > 0 ? 'Gasto ' + R(m.gastoMeta) : 'Aguardando Meta Ads API', false) +
     kpiCard('Qtd de Vendas', m.totalVendas, m.vendasUpsell.length > 0 ? m.vendasUpsell.length + ' upsell(s) incluído(s)' : 'Transações aprovadas', false)
@@ -1001,22 +1002,64 @@ function renderFolha() {
   el('folhaVendedores').innerHTML = html
 }
 
+// ─── CICLO MENSAL (dia 5 ao dia 4 do próximo mês) ────────────
+function getCicloAtual() {
+  var hoje = new Date()
+  var dia = hoje.getDate()
+  var mes = hoje.getMonth()
+  var ano = hoje.getFullYear()
+  var inicioMes, fimMes
+  if (dia >= 5) {
+    // Ciclo começa no dia 5 deste mês, termina no dia 4 do próximo
+    inicioMes = new Date(ano, mes, 5)
+    fimMes = new Date(ano, mes + 1, 4)
+  } else {
+    // Ainda estamos no ciclo do mês anterior
+    inicioMes = new Date(ano, mes - 1, 5)
+    fimMes = new Date(ano, mes, 4)
+  }
+  var fmt = function(d) { return d.toISOString().split('T')[0] }
+  return { inicio: fmt(inicioMes), fim: fmt(fimMes) }
+}
+
+// Calcula folha completa do ciclo mensal atual (independente do período selecionado)
+function getFolhaCiclo() {
+  var ciclo = getCicloAtual()
+  // Filtra transações pagas dentro do ciclo
+  var transacoesCiclo = state.transacoes.filter(function(t) {
+    return t.status === 'Pago' && t.data >= ciclo.inicio && t.data <= ciclo.fim
+  })
+  var totalFolha = 0
+  state.vendedores.forEach(function(v) {
+    var vVendasCiclo = transacoesCiclo.filter(function(t) { return t.src_vendedor === v.src })
+    var vFatCiclo = vVendasCiclo.reduce(function(s,t) { return s + (t.valor||0) }, 0)
+    var esc = getEscalao(vFatCiclo)
+    // Bônus diário do ciclo
+    var todasCiclo = state.transacoes.filter(function(t) { return t.src_vendedor === v.src && t.data >= ciclo.inicio && t.data <= ciclo.fim })
+    var bonus = getBonusDiario(todasCiclo)
+    totalFolha += esc.salario + bonus + (v.auxilio_transporte || 0)
+  })
+  return { total: totalFolha, ciclo: ciclo }
+}
+
 // ─── DRE ─────────────────────────────────────────────────────
 function renderDre() {
   var m = getMetrics('all')
   var totalDespesas = state.despesas.reduce(function(s,d) { return s + (d.valor||0) }, 0)
   var lucroFinal = m.faturamentoLiq - (m.gastoMeta * 1.1215) - totalDespesas
-  var custoEquipe = state.vendedores.reduce(function(s,v) { return s + (v.salario_fixo||0) }, 0)
+  var folhaCiclo = getFolhaCiclo()
+  var lucroReal = m.faturamentoLiq - (m.gastoMeta * 1.1215) - totalDespesas - folhaCiclo.total
 
   el('kpiDre').innerHTML =
     kpiCard('Lucro Operacional', (m.lucroLiq < 0 ? '-' : '') + R(Math.abs(m.lucroLiq)), 'Receita − Tráfego', m.lucroLiq < 0) +
     kpiCard('Total Custos Lançados', R(totalDespesas), totalDespesas === 0 ? '0 despesas no período' : state.despesas.length + ' despesas', false) +
-    kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Folha − Despesas', lucroFinal < 0)
+    kpiCard('Lucro Líquido Final', (lucroFinal < 0 ? '-' : '') + R(Math.abs(lucroFinal)), 'Faturamento − Tráfego − Despesas', lucroFinal < 0) +
+    kpiCard('Lucro Líquido Real', (lucroReal < 0 ? '-' : '') + R(Math.abs(lucroReal)), 'Fat. − Tráfego − Despesas − Folha ciclo (' + folhaCiclo.ciclo.inicio.split('-').reverse().join('/') + ' a ' + folhaCiclo.ciclo.fim.split('-').reverse().join('/') + ')', lucroReal < 0)
 
   el('kpiDre2').innerHTML =
     kpiCard('Faturamento', R(m.faturamentoLiq), '70% normal · 40% upsell', false) +
     kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true) +
-    kpiCard('Folha', R(custoEquipe), 'Salários base', false)
+    kpiCard('Folha do Ciclo', R(folhaCiclo.total), 'Escalões + bônus + transportes · ciclo completo', true)
 
   el('dreResumo').textContent = state.despesas.length + ' registros · ' + R(totalDespesas) + ' total'
 
