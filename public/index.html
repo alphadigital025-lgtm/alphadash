@@ -894,17 +894,18 @@ function renderComercial() {
   var filter = el('vendedorFilter') ? el('vendedorFilter').value : 'all'
   var m = getMetrics(filter)
 
+  // Faturamento bruto 100% do vendedor filtrado
+  var fatBruto = m.pagas.reduce(function(s,t) { return s + valorBruto(t) }, 0)
+
   el('kpiComercial').innerHTML =
     kpiCard('Leads Recebidos', m.mensagens || '?', 'Msgs Meta — todas as campanhas', false) +
     kpiCard('Vendas', m.totalVendas, m.totalVendas + ' transações aprovadas', false, 'VENDA') +
-    kpiCard('Faturamento', R(m.faturamentoLiq), 'Ticket médio ' + R(m.ticket), false) +
-    kpiCard('Taxa de Conversão', m.conv.toFixed(1) + '%', m.totalVendas + ' vendas / ' + m.mensagens + ' leads', false) +
+    kpiCard('Faturamento Líquido', R(m.faturamentoLiq), 'Comissão · ticket médio ' + R(m.ticket), false) +
+    kpiCard('Faturamento Bruto', R(fatBruto), '100% do valor das vendas', false) +
     kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
     kpiCard('CPA (Vendedor)', R(m.cpa), 'Gasto Meta / Vendas', true)
 
-  el('kpiComercial2').innerHTML =
-    kpiCard('Gasto em Tráfego (Total)', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15% · BRL', true) +
-    kpiCard('Msgs Meta', m.mensagens, 'Mensagens iniciadas · todas as campanhas', false)
+  el('kpiComercial2').innerHTML = ''
 
   // Funil
   var convPct = m.mensagens > 0 ? Math.min(m.totalVendas / m.mensagens * 100, 100) : 0
