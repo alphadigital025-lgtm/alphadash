@@ -688,13 +688,13 @@ function loadDataByRange(startDate, endDate) {
   // Calculate days from range for the API (which expects ?days=N)
   var start = new Date(startDate)
   var end   = new Date(endDate)
-  var diffMs = end.getTime() - start.getTime()
-  var days = Math.max(1, Math.round(diffMs / 86400000) + 1)
-
-  // Use start date offset from today
   var today = new Date()
-  var daysFromToday = Math.round((today.getTime() - start.getTime()) / 86400000) + 1
-  var fetchDays = Math.max(days, daysFromToday)
+
+  // Always fetch enough to cover the full billing cycle (day 5 to day 4)
+  var ciclo = getCicloAtual()
+  var cicloStart = new Date(ciclo.inicio)
+  var earliestNeeded = start < cicloStart ? start : cicloStart
+  var fetchDays = Math.round((today.getTime() - earliestNeeded.getTime()) / 86400000) + 2
 
   fetch(API + '/data?days=' + fetchDays)
     .then(function(r) { return r.json() })
@@ -1156,7 +1156,8 @@ function getCicloAtual() {
 function getFolhaCiclo() {
   var ciclo = getCicloAtual()
   // Filtra transações pagas dentro do ciclo
-  var transacoesCiclo = state.transacoes.filter(function(t) {
+  var fonteDre = state.todasTransacoes || state.transacoes
+  var transacoesCiclo = fonteDre.filter(function(t) {
     return t.status === 'Pago' && t.data >= ciclo.inicio && t.data <= ciclo.fim
   })
   var totalFolha = 0
@@ -1165,7 +1166,8 @@ function getFolhaCiclo() {
     var vFatCiclo = vVendasCiclo.reduce(function(s,t) { return s + (t.valor||0) }, 0)
     var esc = getEscalao(vFatCiclo)
     // Bônus diário do ciclo
-    var todasCiclo = state.transacoes.filter(function(t) { return t.src_vendedor === v.src && t.data >= ciclo.inicio && t.data <= ciclo.fim })
+    var fonteCiclo = state.todasTransacoes || state.transacoes
+    var todasCiclo = fonteCiclo.filter(function(t) { return t.src_vendedor === v.src && t.data >= ciclo.inicio && t.data <= ciclo.fim })
     var bonus = getBonusDiario(todasCiclo)
     totalFolha += esc.salario + bonus + (v.auxilio_transporte || 0)
   })
@@ -1182,7 +1184,8 @@ function renderDre() {
   var cicloLabel = ciclo.inicio.split('-').reverse().join('/') + ' a ' + ciclo.fim.split('-').reverse().join('/')
 
   // *** LUCRO REAL: faturamento TRAVADO no ciclo 5→4 — ignora período selecionado ***
-  var transacoesCiclo = state.transacoes.filter(function(t) {
+  var fonteDre = state.todasTransacoes || state.transacoes
+  var transacoesCiclo = fonteDre.filter(function(t) {
     return t.status === 'Pago' && t.data >= ciclo.inicio && t.data <= ciclo.fim
   })
   var faturamentoCiclo = transacoesCiclo.reduce(function(s,t) { return s + valorLiq(t) }, 0)
