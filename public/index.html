@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AlphaDash — Alpha Digital</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AlphaDash">
+<meta name="theme-color" content="#14b8a6">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{
@@ -251,6 +257,87 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   margin-top:10px;font-size:.7rem;color:var(--muted);text-align:center;
   padding:6px;background:rgba(255,255,255,0.03);border-radius:6px;
 }
+
+/* ─── MOBILE RESPONSIVE ─────────────────────────────────────── */
+.hamburger{
+  display:none;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:8px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  cursor:pointer;flex-shrink:0;
+}
+.hamburger svg{width:18px;height:18px;color:var(--muted2);}
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:99;backdrop-filter:blur(4px);
+}
+.sidebar-overlay.open{display:block;}
+
+@media(max-width:768px){
+  .hamburger{display:flex;}
+  .sidebar{
+    transform:translateX(-100%);transition:transform .25s ease;
+    z-index:150;width:260px;
+  }
+  .sidebar.mobile-open{transform:translateX(0);}
+  .main{margin-left:0 !important;}
+  .header{padding:0 12px;gap:8px;}
+  .header-left .header-sub{display:none;}
+  .header-divider{display:none;}
+  .select-range{display:none;}
+  .content{padding:12px;}
+
+  /* Grids viram 1 coluna no mobile */
+  .g5,.g4,.g3,.g2,.g21{grid-template-columns:1fr !important;}
+  
+  /* Cards KPI menores */
+  .kpi{padding:14px 16px;}
+  .kpi-value{font-size:1.4rem;}
+
+  /* Tabelas com scroll horizontal */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:500px;}
+
+  /* Vendor stats 2 colunas no mobile */
+  .vendor-stats{grid-template-columns:1fr 1fr !important;}
+
+  /* Escalão grid 2 colunas */
+  .escalao-grid{grid-template-columns:repeat(2,1fr) !important;}
+
+  /* Modal full screen */
+  .modal{max-width:100%;max-height:95vh;border-radius:16px 16px 0 0;margin-top:auto;}
+  .modal-overlay{align-items:flex-end;padding:0;}
+
+  /* Datepicker adaptado */
+  .datepicker-dropdown{
+    flex-direction:column;min-width:unset;
+    width:calc(100vw - 24px);right:12px !important;
+  }
+  .datepicker-shortcuts{
+    flex-direction:row;flex-wrap:wrap;border-right:none;
+    border-bottom:1px solid var(--border);min-width:unset;
+  }
+  .dp-shortcut{padding:5px 8px;font-size:.72rem;}
+
+  /* Header right simplificado */
+  .header-right{gap:6px;}
+  .status-dot span{display:none;}
+  .btn-refresh span{display:none;}
+  .btn-refresh{padding:6px;}
+
+  /* Flex between wrap */
+  .flex-between{flex-direction:column;align-items:flex-start;}
+
+  /* Funil */
+  .g2 > .card{min-width:0;}
+
+  /* Rank items */
+  .rank-bar-bg{display:none;}
+}
+
+@media(max-width:480px){
+  .kpi-value{font-size:1.2rem;}
+  .g5,.g4,.g3{grid-template-columns:1fr 1fr !important;}
+}
 </style>
 </head>
 <body>
@@ -260,6 +347,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   <span class="loading-text">Carregando dados...</span>
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">
@@ -317,6 +405,9 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="header-title" id="headerTitle">Visão Global</div>
       <div class="header-sub" id="headerSub">KPIs macro da operação</div>
     </div>
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
     <div class="header-right">
       <div class="status-dot" id="statusMeta"><div class="dot dot-off"></div><span class="dot-off-text">Meta Ads</span></div>
       <div class="status-dot" id="statusWebhook"><div class="dot dot-off"></div><span class="dot-off-text">Webhooks</span></div>
@@ -1533,6 +1624,39 @@ document.addEventListener('click', function(e) {
     closeDatepicker()
   }
 })
+
+
+// ─── MOBILE SIDEBAR ──────────────────────────────────────────
+function toggleSidebar() {
+  var sidebar = el('sidebar')
+  var overlay = el('sidebarOverlay')
+  var isOpen = sidebar.classList.contains('mobile-open')
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open')
+    overlay.classList.remove('open')
+  } else {
+    sidebar.classList.add('mobile-open')
+    overlay.classList.add('open')
+  }
+}
+function closeSidebar() {
+  el('sidebar').classList.remove('mobile-open')
+  el('sidebarOverlay').classList.remove('open')
+}
+
+// Close sidebar when navigating on mobile
+var origGoPage = goPage
+goPage = function(id) {
+  origGoPage(id)
+  if (window.innerWidth <= 768) closeSidebar()
+}
+
+// ─── PWA SERVICE WORKER ───────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function() {})
+  })
+}
 
 // ─── INIT ────────────────────────────────────────────────────
 loadData()
