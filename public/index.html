@@ -453,6 +453,76 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .kpi-label{font-size:.6rem;}
   .header-title{font-size:.8rem;}
 }
+
+/* ─── PÓDIO RANKING ─────────────────────────────────────────── */
+.podium-wrap{
+  display:flex;align-items:flex-end;justify-content:center;
+  gap:12px;padding:32px 16px 0;
+}
+.podium-item{
+  display:flex;flex-direction:column;align-items:center;
+  flex:1;max-width:220px;
+  animation:podiumRise .6s ease both;
+}
+.podium-1st{order:2;}
+.podium-2nd{order:1;}
+.podium-3rd{order:3;}
+@keyframes podiumRise{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+.podium-1st{animation-delay:.1s;}
+.podium-2nd{animation-delay:.25s;}
+.podium-3rd{animation-delay:.4s;}
+.podium-avatar{
+  font-size:2.8rem;margin-bottom:8px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+.podium-1st .podium-avatar{font-size:3.4rem;}
+.podium-name{
+  font-weight:800;font-size:1rem;color:var(--text);
+  margin-bottom:4px;text-align:center;
+}
+.podium-1st .podium-name{font-size:1.15rem;}
+.podium-liq{
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  font-size:.95rem;color:var(--teal2);margin-bottom:2px;
+}
+.podium-1st .podium-liq{font-size:1.1rem;}
+.podium-bruto{font-size:.68rem;color:var(--muted);margin-bottom:2px;}
+.podium-vendas{
+  font-size:.7rem;color:var(--muted2);
+  background:rgba(255,255,255,0.06);border-radius:20px;
+  padding:2px 10px;margin-bottom:12px;
+}
+.podium-base{
+  width:100%;border-radius:10px 10px 0 0;
+  display:flex;align-items:center;justify-content:center;
+  padding:14px 0 10px;
+}
+.base-1st{
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  min-height:90px;box-shadow:0 -4px 20px rgba(245,158,11,0.3);
+}
+.base-2nd{
+  background:linear-gradient(135deg,#94a3b8,#64748b);
+  min-height:65px;box-shadow:0 -4px 16px rgba(148,163,184,0.2);
+}
+.base-3rd{
+  background:linear-gradient(135deg,#b45309,#92400e);
+  min-height:50px;box-shadow:0 -4px 16px rgba(180,83,9,0.2);
+}
+.podium-pos{
+  font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.9);
+  font-family:'JetBrains Mono',monospace;
+}
+.base-1st .podium-pos{font-size:2rem;}
+
+@media(max-width:768px){
+  .podium-wrap{gap:6px;padding:20px 8px 0;}
+  .podium-name{font-size:.8rem;}
+  .podium-liq{font-size:.78rem;}
+  .podium-avatar{font-size:2rem;}
+  .podium-1st .podium-avatar{font-size:2.4rem;}
+  .podium-bruto{display:none;}
+}
 </style>
 </head>
 <body>
@@ -1158,10 +1228,11 @@ function renderRanking() {
   var m = getMetrics('all')
   el('rankingAtualizado').textContent = 'Classificação por faturamento no período selecionado · atualizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
 
+  var fatBrutoTotal = m.pagas.reduce(function(s,t) { return s + valorBruto(t) }, 0)
   el('kpiRanking').innerHTML =
-    kpiCard('Faturamento Total', R(m.faturamentoLiq), '70% normal · 40% upsell', false) +
-    kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false) +
-    kpiCard('Gasto em Tráfego', R(m.gastoMeta * 1.1215), 'Inclui imposto de 12,15%', true)
+    kpiCard('Faturamento Bruto', R(fatBrutoTotal), '100% do valor das vendas', false) +
+    kpiCard('Faturamento Líquido', R(m.faturamentoLiq), '70% normal · 40% upsell', false) +
+    kpiCard('Total de Vendas', m.totalVendas, state.vendedores.length + ' vendedores', false)
 
   if (state.vendedores.length === 0) {
     el('rankingList').innerHTML = '<div class="card"><div class="empty-state"><p>Nenhum vendedor cadastrado. Acesse Comercial → Gerenciar Equipe.</p></div></div>'
@@ -1176,19 +1247,51 @@ function renderRanking() {
   }).sort(function(a,b) { return b.fat - a.fat })
 
   var maxFat = sorted[0] ? sorted[0].fat : 1
-  var numCls = ['gold', 'silver', 'bronze']
-  var html = '<div class="card">'
-  sorted.forEach(function(item, i) {
-    var pct = maxFat > 0 ? (item.fat / maxFat * 100).toFixed(1) : 0
-    html += '<div class="rank-item">' +
-      '<div class="rank-num ' + (numCls[i]||'') + '">' + (i+1) + '</div>' +
-      '<div class="rank-name">' + item.v.nome + '</div>' +
-      '<div class="rank-bar-bg"><div class="rank-bar" style="width:' + pct + '%"></div></div>' +
-      '<div class="rank-val">' + R(item.fat) + '</div>' +
-      '</div>'
+
+  // ── PÓDIO (top 3) ──
+  var podiumOrder = [1, 0, 2] // visual: 2º | 1º | 3º
+  var podiumHtml = '<div class="podium-wrap">'
+  podiumOrder.forEach(function(idx) {
+    var item = sorted[idx]
+    if (!item) return
+    var pos = idx + 1
+    var icons = ['🥇','🥈','🥉']
+    var heights = ['podium-1st','podium-2nd','podium-3rd']
+    var fatBrutoV = m.pagas.filter(function(t){ return t.src_vendedor === item.v.src }).reduce(function(s,t){ return s + valorBruto(t) }, 0)
+    var pct = maxFat > 0 ? (item.fat / maxFat * 100).toFixed(0) : 0
+    podiumHtml += '<div class="podium-item ' + heights[idx] + '">' +
+      '<div class="podium-avatar">' + icons[idx] + '</div>' +
+      '<div class="podium-name">' + item.v.nome + '</div>' +
+      '<div class="podium-liq">' + R(item.fat) + '</div>' +
+      '<div class="podium-bruto">' + R(fatBrutoV) + ' bruto</div>' +
+      '<div class="podium-vendas">' + item.qtd + ' vendas</div>' +
+      '<div class="podium-base ' + (idx===0?'base-1st':idx===1?'base-2nd':'base-3rd') + '">' +
+        '<span class="podium-pos">' + pos + 'º</span>' +
+      '</div>' +
+    '</div>'
   })
-  html += '</div>'
-  el('rankingList').innerHTML = html
+  podiumHtml += '</div>'
+
+  // ── LISTA COMPLETA ──
+  var listHtml = '<div class="card" style="margin-top:16px;">' +
+    '<div class="card-title"><div class="card-title-dot"></div>Ranking Completo</div>'
+  sorted.forEach(function(item, i) {
+    var fatBrutoV = m.pagas.filter(function(t){ return t.src_vendedor === item.v.src }).reduce(function(s,t){ return s + valorBruto(t) }, 0)
+    var pct = maxFat > 0 ? (item.fat / maxFat * 100).toFixed(1) : 0
+    var numCls = ['gold','silver','bronze']
+    listHtml += '<div class="rank-item">' +
+      '<div class="rank-num ' + (numCls[i]||'') + '">' + (i+1) + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="rank-name">' + item.v.nome + '</div>' +
+        '<div style="font-size:.68rem;color:var(--muted);margin-top:1px;">' + item.qtd + ' vendas · bruto ' + R(fatBrutoV) + '</div>' +
+        '<div class="rank-bar-bg" style="margin-top:5px;"><div class="rank-bar" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="rank-val">' + R(item.fat) + '</div>' +
+    '</div>'
+  })
+  listHtml += '</div>'
+
+  el('rankingList').innerHTML = podiumHtml + listHtml
 }
 
 // ─── INTELIGENCIA ─────────────────────────────────────────────
