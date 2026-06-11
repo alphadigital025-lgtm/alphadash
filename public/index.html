@@ -1262,8 +1262,8 @@ function renderRanking() {
     podiumHtml += '<div class="podium-item ' + heights[idx] + '">' +
       '<div class="podium-avatar">' + icons[idx] + '</div>' +
       '<div class="podium-name">' + item.v.nome + '</div>' +
-      '<div class="podium-liq">' + R(item.fat) + '</div>' +
-      '<div class="podium-bruto">' + R(fatBrutoV) + ' bruto</div>' +
+      '<div class="podium-liq">' + R(fatBrutoV) + '</div>' +
+      '<div class="podium-bruto">' + R(item.fat) + ' líquido</div>' +
       '<div class="podium-vendas">' + item.qtd + ' vendas</div>' +
       '<div class="podium-base ' + (idx===0?'base-1st':idx===1?'base-2nd':'base-3rd') + '">' +
         '<span class="podium-pos">' + pos + 'º</span>' +
