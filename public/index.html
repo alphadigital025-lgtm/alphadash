@@ -898,10 +898,10 @@ function renderComercial() {
   var fatBruto = m.pagas.reduce(function(s,t) { return s + valorBruto(t) }, 0)
 
   el('kpiComercial').innerHTML =
+    kpiCard('Faturamento Bruto', R(fatBruto), '100% do valor das vendas', false) +
+    kpiCard('Faturamento Líquido', R(m.faturamentoLiq), 'Comissão · ticket médio ' + R(m.ticket), false) +
     kpiCard('Leads Recebidos', m.mensagens || '?', 'Msgs Meta — todas as campanhas', false) +
     kpiCard('Vendas', m.totalVendas, m.totalVendas + ' transações aprovadas', false, 'VENDA') +
-    kpiCard('Faturamento Líquido', R(m.faturamentoLiq), 'Comissão · ticket médio ' + R(m.ticket), false) +
-    kpiCard('Faturamento Bruto', R(fatBruto), '100% do valor das vendas', false) +
     kpiCard('Ticket Médio', R(m.ticket), m.totalVendas + ' transações', false) +
     kpiCard('CPA (Vendedor)', R(m.cpa), 'Gasto Meta / Vendas', true)
 
