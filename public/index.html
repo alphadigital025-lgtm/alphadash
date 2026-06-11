@@ -399,50 +399,39 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .content{overflow-x:hidden;}
   body{overflow-x:hidden;}
 
-  /* Inteligencia — KPIs todos em 1 coluna */
-  #kpiInteligencia{grid-template-columns:1fr !important;width:100% !important;}
+  /* ── Inteligencia ── */
+  div#kpiInteligencia.g5{grid-template-columns:1fr !important;}
   #contasList .item-row{flex-wrap:wrap;}
-  #tbodyCriativos tr td:nth-child(1){max-width:120px;overflow:hidden;text-overflow:ellipsis;}
-
-  /* DRE — KPIs todos em 1 coluna */
-  #kpiDre{grid-template-columns:1fr !important;width:100% !important;}
-  #kpiDre2{grid-template-columns:1fr !important;width:100% !important;}
-  #tbodyDespesas tr td:nth-child(1){max-width:100px;overflow:hidden;text-overflow:ellipsis;}
-
-  /* Textos longos nos cards — quebra linha */
-  .kpi-sub{white-space:normal !important;word-break:break-word;}
-
-  /* Botões da inteligencia — empilham verticalmente */
-  #page-inteligencia .flex-between{flex-direction:column !important;align-items:stretch !important;}
-  #page-inteligencia .flex-row{flex-direction:column !important;width:100%;}
-  #page-inteligencia .flex-row .btn-secondary,
-  #page-inteligencia .flex-row .btn-teal{width:100%;justify-content:center;}
-
-  /* Botão adicionar despesa DRE */
-  #page-dre .flex-between{flex-direction:column !important;align-items:stretch !important;}
-  #page-dre .btn-teal{width:100%;justify-content:center;}
-
-  /* Chip criativos */
-  #chipCriativos{width:100%;}
-
-  /* Account IDs longos — trunca */
-  .item-sub{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-
-  /* Tabela criativos — esconde colunas menos importantes no mobile */
+  .item-sub{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #tbodyCriativos td:nth-child(4),
   #tbodyCriativos td:nth-child(5),
   #tbodyCriativos td:nth-child(6),
   #page-inteligencia table thead th:nth-child(4),
   #page-inteligencia table thead th:nth-child(5),
   #page-inteligencia table thead th:nth-child(6){display:none;}
+  #page-inteligencia .flex-between{flex-direction:column !important;align-items:stretch !important;}
+  #page-inteligencia .flex-row{flex-direction:column !important;width:100% !important;}
+  #page-inteligencia .flex-row .btn-secondary,
+  #page-inteligencia .flex-row .btn-teal{width:100% !important;justify-content:center;}
+  #chipCriativos{max-width:100% !important;}
 
-  /* Tabela despesas — esconde coluna categoria no mobile */
+  /* ── DRE ── */
+  div#kpiDre.g4{grid-template-columns:1fr !important;}
+  div#kpiDre2.g3{grid-template-columns:1fr !important;}
   #tbodyDespesas td:nth-child(2),
   #page-dre table thead th:nth-child(2){display:none;}
+  #tbodyDespesas td:nth-child(5){display:none;}
+  #page-dre table thead th:nth-child(5){display:none;}
+  #page-dre .flex-between{flex-direction:column !important;align-items:stretch !important;}
+  #page-dre .btn-teal{width:100% !important;justify-content:center;}
 
-  /* Remove scrollbar horizontal visível */
-  html,body{overflow-x:hidden !important;max-width:100vw;}
-  #page-inteligencia,#page-dre{overflow-x:hidden !important;}
+  /* ── Textos dos cards ── */
+  .kpi-sub{white-space:normal !important;word-break:break-word;}
+  .kpi{min-width:0 !important;width:100% !important;}
+
+  /* ── Overflow total ── */
+  html,body{overflow-x:hidden !important;max-width:100vw !important;}
+  .page,.content,.main{overflow-x:hidden !important;max-width:100% !important;}
 
   /* Força largura maxima em todos os elementos filhos */
   .main *{max-width:100%;box-sizing:border-box;}
