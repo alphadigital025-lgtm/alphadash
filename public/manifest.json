@@ -1,0 +1,24 @@
+{
+  "name": "AlphaDash",
+  "short_name": "AlphaDash",
+  "description": "Dashboard Alpha Digital",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#14b8a6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230a0f1e'/><rect width='192' height='192' rx='32' fill='%23142035'/><path d='M140 56l-53 53-31-31L28 106' stroke='%2314b8a6' stroke-width='14' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M100 56h40v40' stroke='%2314b8a6' stroke-width='14' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0f1e'/><rect width='512' height='512' rx='80' fill='%23142035'/><path d='M370 150l-141 141-83-83L74 280' stroke='%2314b8a6' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M266 150h104v104' stroke='%2314b8a6' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
