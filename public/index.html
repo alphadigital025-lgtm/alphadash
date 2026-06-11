@@ -1283,10 +1283,10 @@ function renderRanking() {
       '<div class="rank-num ' + (numCls[i]||'') + '">' + (i+1) + '</div>' +
       '<div style="flex:1;min-width:0;">' +
         '<div class="rank-name">' + item.v.nome + '</div>' +
-        '<div style="font-size:.68rem;color:var(--muted);margin-top:1px;">' + item.qtd + ' vendas · bruto ' + R(fatBrutoV) + '</div>' +
+        '<div style="font-size:.68rem;color:var(--muted);margin-top:1px;">' + item.qtd + ' vendas · líquido ' + R(item.fat) + '</div>' +
         '<div class="rank-bar-bg" style="margin-top:5px;"><div class="rank-bar" style="width:' + pct + '%"></div></div>' +
       '</div>' +
-      '<div class="rank-val">' + R(item.fat) + '</div>' +
+      '<div class="rank-val">' + R(fatBrutoV) + '</div>' +
     '</div>'
   })
   listHtml += '</div>'
