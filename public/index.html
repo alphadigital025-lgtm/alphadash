@@ -425,6 +425,25 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   /* Chip criativos */
   #chipCriativos{width:100%;}
 
+  /* Account IDs longos — trunca */
+  .item-sub{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* Tabela criativos — esconde colunas menos importantes no mobile */
+  #tbodyCriativos td:nth-child(4),
+  #tbodyCriativos td:nth-child(5),
+  #tbodyCriativos td:nth-child(6),
+  #page-inteligencia table thead th:nth-child(4),
+  #page-inteligencia table thead th:nth-child(5),
+  #page-inteligencia table thead th:nth-child(6){display:none;}
+
+  /* Tabela despesas — esconde coluna categoria no mobile */
+  #tbodyDespesas td:nth-child(2),
+  #page-dre table thead th:nth-child(2){display:none;}
+
+  /* Remove scrollbar horizontal visível */
+  html,body{overflow-x:hidden !important;max-width:100vw;}
+  #page-inteligencia,#page-dre{overflow-x:hidden !important;}
+
   /* Força largura maxima em todos os elementos filhos */
   .main *{max-width:100%;box-sizing:border-box;}
   
