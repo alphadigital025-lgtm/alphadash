@@ -399,15 +399,18 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .content{overflow-x:hidden;}
   body{overflow-x:hidden;}
 
-  /* Inteligencia — KPIs e tabela criativos */
-  #kpiInteligencia{grid-template-columns:1fr 1fr !important;}
+  /* Inteligencia — KPIs todos em 1 coluna */
+  #kpiInteligencia{grid-template-columns:1fr !important;}
   #contasList .item-row{flex-wrap:wrap;}
   #tbodyCriativos tr td:nth-child(1){max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 
-  /* DRE — tabela despesas e KPIs */
-  #kpiDre{grid-template-columns:1fr 1fr !important;}
-  #kpiDre2{grid-template-columns:1fr 1fr 1fr !important;}
+  /* DRE — KPIs todos em 1 coluna */
+  #kpiDre{grid-template-columns:1fr !important;}
+  #kpiDre2{grid-template-columns:1fr !important;}
   #tbodyDespesas tr td:nth-child(1){max-width:100px;overflow:hidden;text-overflow:ellipsis;}
+
+  /* Textos longos nos cards — quebra linha */
+  .kpi-sub{white-space:normal !important;word-break:break-word;}
 
   /* Força largura maxima em todos os elementos filhos */
   .main *{max-width:100%;box-sizing:border-box;}
