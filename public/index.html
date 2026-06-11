@@ -280,63 +280,128 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   }
   .sidebar.mobile-open{transform:translateX(0);}
   .main{margin-left:0 !important;}
-  .header{padding:0 12px;gap:8px;}
+  .header{padding:0 12px;gap:6px;}
   .header-left .header-sub{display:none;}
   .header-divider{display:none;}
-  .select-range{display:none;}
-  .content{padding:12px;}
+  .content{padding:10px;}
 
-  /* Grids viram 1 coluna no mobile */
-  .g5,.g4,.g3,.g2,.g21{grid-template-columns:1fr !important;}
-  
-  /* Cards KPI menores */
+  /* Todos os grids viram 1 coluna */
+  .g5,.g4,.g3,.g2,.g21{
+    grid-template-columns:1fr !important;
+    gap:10px;
+  }
+
+  /* Cards KPI */
   .kpi{padding:14px 16px;}
   .kpi-value{font-size:1.4rem;}
 
-  /* Tabelas com scroll horizontal */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  table{min-width:500px;}
+  /* Tabelas — scroll horizontal total */
+  .table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
+  }
+  table{min-width:520px;}
+  td,th{padding:8px 10px;font-size:.72rem;}
 
-  /* Vendor stats 2 colunas no mobile */
-  .vendor-stats{grid-template-columns:1fr 1fr !important;}
+  /* Vendor card */
+  .vendor-card{padding:12px;}
+  .vendor-stats{grid-template-columns:1fr 1fr !important;gap:6px;}
+  .vendor-stat{padding:8px;}
+  .vendor-stat-val{font-size:.85rem;}
 
   /* Escalão grid 2 colunas */
   .escalao-grid{grid-template-columns:repeat(2,1fr) !important;}
 
-  /* Modal full screen */
-  .modal{max-width:100%;max-height:95vh;border-radius:16px 16px 0 0;margin-top:auto;}
+  /* Bonus row empilha */
+  .bonus-row{flex-direction:column;gap:6px;}
+  .bonus-chip{font-size:.7rem;}
+
+  /* Rank */
+  .rank-bar-bg{display:none;}
+  .rank-val{min-width:70px;}
+
+  /* Modal bottom sheet */
+  .modal{
+    max-width:100% !important;
+    max-height:92vh;
+    border-radius:20px 20px 0 0;
+    margin-top:auto;
+  }
   .modal-overlay{align-items:flex-end;padding:0;}
 
-  /* Datepicker adaptado */
+  /* Datepicker mobile */
   .datepicker-dropdown{
-    flex-direction:column;min-width:unset;
-    width:calc(100vw - 24px);right:12px !important;
+    flex-direction:column !important;
+    min-width:unset !important;
+    width:calc(100vw - 20px) !important;
+    right:10px !important;
+    left:10px !important;
+    max-height:85vh;
+    overflow-y:auto;
   }
   .datepicker-shortcuts{
-    flex-direction:row;flex-wrap:wrap;border-right:none;
-    border-bottom:1px solid var(--border);min-width:unset;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    border-right:none !important;
+    border-bottom:1px solid var(--border) !important;
+    min-width:unset !important;
+    padding:8px !important;
+    gap:4px !important;
   }
-  .dp-shortcut{padding:5px 8px;font-size:.72rem;}
+  .dp-shortcut{padding:5px 8px;font-size:.7rem;}
+  .datepicker-cal{padding:10px;}
 
-  /* Header right simplificado */
-  .header-right{gap:6px;}
+  /* Header direito compacto */
+  .header-right{gap:5px;}
   .status-dot span{display:none;}
   .btn-refresh span{display:none;}
-  .btn-refresh{padding:6px;}
+  .btn-refresh{padding:6px 8px;}
+  .btn-datepicker{padding:6px 8px;font-size:.72rem;}
+  #dateRangeLabel{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-  /* Flex between wrap */
-  .flex-between{flex-direction:column;align-items:flex-start;}
+  /* Flex between */
+  .flex-between{flex-direction:column;align-items:stretch;gap:8px;}
+  .flex-row{flex-wrap:wrap;gap:6px;}
+
+  /* Botões menores */
+  .btn-teal,.btn-secondary{font-size:.72rem;padding:6px 10px;}
+
+  /* Chip */
+  .chip{font-size:.65rem;}
 
   /* Funil */
-  .g2 > .card{min-width:0;}
+  .funil-summary{font-size:.75rem;}
+  .cpa-value{font-size:1.3rem;}
 
-  /* Rank items */
-  .rank-bar-bg{display:none;}
+  /* Inteligencia — criativos tabela */
+  #tbodyCriativos td{font-size:.68rem;}
+
+  /* DRE despesas */
+  #tbodyDespesas td{font-size:.72rem;}
+
+  /* Form grid vira 1 coluna */
+  .form-grid{grid-template-columns:1fr !important;}
+
+  /* Add row empilha */
+  .add-row{flex-direction:column;}
+
+  /* Item row */
+  .item-row{flex-wrap:wrap;}
+  .item-sub{font-size:.65rem;}
+
+  /* Logo text oculto na sidebar mobile — mais espaço */
+  .sidebar-logo .logo-name{font-size:.9rem;}
+
+  /* Overflow geral */
+  .page{overflow-x:hidden;}
+  .card{overflow:hidden;}
 }
 
-@media(max-width:480px){
-  .kpi-value{font-size:1.2rem;}
-  .g5,.g4,.g3{grid-template-columns:1fr 1fr !important;}
+@media(max-width:400px){
+  .kpi-value{font-size:1.15rem;}
+  .kpi-label{font-size:.6rem;}
+  .header-title{font-size:.8rem;}
 }
 </style>
 </head>
