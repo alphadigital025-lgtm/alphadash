@@ -400,17 +400,30 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   body{overflow-x:hidden;}
 
   /* Inteligencia — KPIs todos em 1 coluna */
-  #kpiInteligencia{grid-template-columns:1fr !important;}
+  #kpiInteligencia{grid-template-columns:1fr !important;width:100% !important;}
   #contasList .item-row{flex-wrap:wrap;}
   #tbodyCriativos tr td:nth-child(1){max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 
   /* DRE — KPIs todos em 1 coluna */
-  #kpiDre{grid-template-columns:1fr !important;}
-  #kpiDre2{grid-template-columns:1fr !important;}
+  #kpiDre{grid-template-columns:1fr !important;width:100% !important;}
+  #kpiDre2{grid-template-columns:1fr !important;width:100% !important;}
   #tbodyDespesas tr td:nth-child(1){max-width:100px;overflow:hidden;text-overflow:ellipsis;}
 
   /* Textos longos nos cards — quebra linha */
   .kpi-sub{white-space:normal !important;word-break:break-word;}
+
+  /* Botões da inteligencia — empilham verticalmente */
+  #page-inteligencia .flex-between{flex-direction:column !important;align-items:stretch !important;}
+  #page-inteligencia .flex-row{flex-direction:column !important;width:100%;}
+  #page-inteligencia .flex-row .btn-secondary,
+  #page-inteligencia .flex-row .btn-teal{width:100%;justify-content:center;}
+
+  /* Botão adicionar despesa DRE */
+  #page-dre .flex-between{flex-direction:column !important;align-items:stretch !important;}
+  #page-dre .btn-teal{width:100%;justify-content:center;}
+
+  /* Chip criativos */
+  #chipCriativos{width:100%;}
 
   /* Força largura maxima em todos os elementos filhos */
   .main *{max-width:100%;box-sizing:border-box;}
